@@ -1,0 +1,14 @@
+{
+  "version": "6.6.0",
+  "codename": "Runtime Optimization",
+  "maxFilesBeforeApproval": 8,
+  "maxSearchResultsBeforeApproval": 5,
+  "allowGlobalSearchBeforeApproval": false,
+  "requireContextRouting": true,
+  "requireReviewGate": true,
+  "requireHumanApprovalBeforeEdit": true,
+  "requiredValidation": [
+    "npm run build",
+    "git diff --check"
+  ]
+}

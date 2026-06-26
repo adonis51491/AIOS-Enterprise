@@ -1,4 +1,27 @@
-\# Context Routing Rule
+\
+
+# AIOS Runtime v6.6 Rule
+
+Before doing any project work, read:
+
+1. `.ai/11_RUNTIME/runtime.json`
+2. `.ai/11_RUNTIME/AI_RUNTIME.md`
+3. `.ai/token-budget.md`
+4. `.ai/module-map.json`
+5. `.ai/09_MEMORY/SESSION.md`
+6. `.ai/09_MEMORY/DECISIONS.md`
+7. `.ai/09_MEMORY/ARCHITECTURE.md`
+
+AI must use context routing before reading source code.
+
+AI must pass review gate before editing.
+
+AI must update memory and report files after work.
+
+
+
+
+# Context Routing Rule
 
 
 

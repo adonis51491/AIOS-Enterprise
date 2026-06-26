@@ -1,5 +1,24 @@
 \# Changelog
 
+## v6.6.0
+
+### Added
+
+- Runtime configuration
+- AI Runtime sequence
+- Session Memory
+- Decision Memory
+- Architecture Memory
+- Bugfix report template
+
+### Changed
+
+- AI agents must follow runtime sequence before editing
+- AI agents must update memory and reports after work
+- Context routing is now part of the runtime
+
+---
+
 
 ## v6.5.0
 
