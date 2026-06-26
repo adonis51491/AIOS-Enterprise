@@ -1,3 +1,12 @@
+﻿## v6.7.1
+
+Date: 2026-06-27
+
+### Added / Changed
+
+- Add automated version and changelog update command
+
+---
 \# Changelog
 
 ## v6.7.0
@@ -147,4 +156,5 @@
 \- version.json
 
 \- README.md
+
 

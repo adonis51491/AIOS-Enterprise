@@ -53,4 +53,44 @@ switch ($Command) {
         Write-Host "Unknown command: $Command"
         Write-Host "Available: version, install, doctor, start"
     }
+    "release" {
+    $VersionPath = Join-Path $Root "version.json"
+    $ChangelogPath = Join-Path $Root "CHANGELOG.md"
+
+    $NewVersion = Read-Host "New version, example 6.7.1"
+    $Codename = Read-Host "Codename"
+    $Summary = Read-Host "Release summary"
+
+    $VersionJson = @{
+        name = "AIOS Enterprise"
+        version = $NewVersion
+        codename = $Codename
+        description = $Summary
+    } | ConvertTo-Json -Depth 3
+
+    $VersionJson | Out-File -FilePath $VersionPath -Encoding utf8
+
+    $Date = Get-Date -Format "yyyy-MM-dd"
+
+    $Entry = @"
+## v$NewVersion
+
+Date: $Date
+
+### Added / Changed
+
+- $Summary
+
+---
+"@
+
+    $Old = ""
+    if (Test-Path $ChangelogPath) {
+        $Old = Get-Content $ChangelogPath -Raw
+    }
+
+    ($Entry + "`n" + $Old) | Out-File -FilePath $ChangelogPath -Encoding utf8
+
+    Write-Host "Updated version.json and CHANGELOG.md to v$NewVersion"
+}
 }
