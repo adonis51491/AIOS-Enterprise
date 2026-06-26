@@ -3,14 +3,20 @@ param(
     [string]$TargetPath
 )
 
-$TemplatePath = Join-Path $PSScriptRoot "template"
+$TemplatePath = Join-Path $PSScriptRoot "template\project"
 
 if (!(Test-Path $TargetPath)) {
     Write-Host "Target path does not exist: $TargetPath"
     exit 1
 }
 
-Write-Host "Installing AIOS Enterprise to $TargetPath"
+if (!(Test-Path $TemplatePath)) {
+    Write-Host "Template path does not exist: $TemplatePath"
+    exit 1
+}
+
+Write-Host "Installing AIOS Enterprise..."
+Write-Host "Target: $TargetPath"
 
 Copy-Item -Path "$TemplatePath\*" -Destination $TargetPath -Recurse -Force
 
