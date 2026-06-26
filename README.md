@@ -1,40 +1,41 @@
-\# AIOS Enterprise
+# AIOS Enterprise v8.0
 
+AIOS Enterprise v8 is an AI Agent Runtime Framework for safer, faster, and more repeatable AI-assisted software development.
 
+## Core Idea
 
-AIOS Enterprise 是一套給 AI Agent 使用的軟體開發作業系統。
+AI should not freely scan and modify a repository.
 
+AIOS v8 gives AI:
 
+- Kernel
+- Runtime states
+- Workflow rules
+- Policy guardrails
+- Context routing
+- Memory
+- Snapshots
+- Release automation
+- Plugin interface
 
-它提供：
+## Standard Flow
 
+```text
+PLAN → IMPLEMENT → REVIEW → VERIFY → RELEASE → ARCHIVE
+```
 
+## Quick Start
 
-\- AI Agent 工作流程
+```bash
+pwsh scripts/aios.ps1 doctor
+pwsh scripts/aios.ps1 run BUG-001
+pwsh scripts/aios.ps1 release
+```
 
-\- 專案記憶
+## CLI Prompt for Gemini / Codex / Claude Code
 
-\- GitHub Issue / PR 模板
+See:
 
-\- Playwright 驗收流程
-
-\- 可重複安裝到不同專案的 template
-
-
-
-\## Version
-
-
-
-v6.1.0
-
-
-
-\## Install
-
-
-
-```powershell
-
-.\\install.ps1 -TargetPath "C:\\GitHub\\your-project"
-
+```text
+templates/AIOS_V8_CLI_PROMPT.md
+```

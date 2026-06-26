@@ -1,0 +1,46 @@
+{
+  "features": {
+    "booking": {
+      "folders": [
+        "app/booking",
+        "components/booking",
+        "lib/booking"
+      ],
+      "keywords": [
+        "booking",
+        "reservation",
+        "appointment",
+        "conflict"
+      ],
+      "default_allowed_files": []
+    },
+    "payment": {
+      "folders": [
+        "app/payment",
+        "components/payment",
+        "lib/payment"
+      ],
+      "keywords": [
+        "payment",
+        "checkout",
+        "stripe",
+        "invoice"
+      ],
+      "default_allowed_files": []
+    },
+    "auth": {
+      "folders": [
+        "app/auth",
+        "components/auth",
+        "lib/auth"
+      ],
+      "keywords": [
+        "auth",
+        "login",
+        "session",
+        "permission"
+      ],
+      "default_allowed_files": []
+    }
+  }
+}

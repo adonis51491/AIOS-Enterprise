@@ -1,0 +1,9 @@
+{
+  "name": "AIOS Enterprise",
+  "version": "8.0.0",
+  "codename": "KernelForge",
+  "channel": "enterprise-lts",
+  "runtime": "v8",
+  "created_at": "2026-06-26T16:21:57",
+  "release_summary": "AIOS upgraded from runtime framework to AI operating system architecture."
+}

@@ -1,0 +1,45 @@
+aios:
+  name: AIOS Enterprise
+  version: 8.0.0
+  codename: KernelForge
+  mode: enterprise
+
+runtime:
+  default_workflow: bugfix
+  state_lock: true
+  snapshot_enabled: true
+  recovery_enabled: true
+  max_runtime_minutes: 30
+
+context:
+  router: v3
+  allow_recursive_scan: false
+  allow_git_history_scan: false
+  max_context_files: 8
+
+agents:
+  planner:
+    token_budget: 2500
+    can_modify_files: false
+  architect:
+    token_budget: 3000
+    can_modify_files: false
+  coder:
+    token_budget: 7000
+    can_modify_files: true
+  reviewer:
+    token_budget: 3500
+    can_modify_files: false
+  verifier:
+    token_budget: 3000
+    can_modify_files: false
+  release_manager:
+    token_budget: 2000
+    can_modify_files: true
+
+release:
+  auto_version: true
+  auto_changelog: true
+  auto_release_notes: true
+  auto_commit_message: true
+  auto_pr_description: true

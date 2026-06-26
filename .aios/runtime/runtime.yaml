@@ -1,0 +1,26 @@
+runtime:
+  states:
+    - INIT
+    - PLAN
+    - IMPLEMENT
+    - REVIEW
+    - VERIFY
+    - RELEASE
+    - ARCHIVE
+
+timeouts_seconds:
+  PLAN: 180
+  IMPLEMENT: 300
+  REVIEW: 180
+  VERIFY: 180
+  RELEASE: 120
+
+failure_policy:
+  on_timeout: output_partial_result
+  on_policy_violation: stop
+  on_missing_acceptance: stop
+  on_unknown_scope: ask_for_scope
+
+resume:
+  enabled: true
+  source: .aios/snapshots/latest.json

@@ -1,0 +1,27 @@
+kernel:
+  name: AIOS Kernel
+  version: 8.0.0
+  responsibilities:
+    - state_machine
+    - policy_enforcement
+    - agent_scheduling
+    - context_routing
+    - memory_access
+    - snapshot_recovery
+    - release_control
+
+state_machine:
+  allowed_transitions:
+    INIT: [PLAN]
+    PLAN: [IMPLEMENT, ARCHIVE]
+    IMPLEMENT: [REVIEW, PLAN, ARCHIVE]
+    REVIEW: [VERIFY, IMPLEMENT, ARCHIVE]
+    VERIFY: [RELEASE, IMPLEMENT, ARCHIVE]
+    RELEASE: [ARCHIVE]
+    ARCHIVE: []
+
+guards:
+  block_unrelated_files: true
+  block_dependency_changes_without_approval: true
+  block_main_branch_changes: true
+  require_acceptance_mapping: true

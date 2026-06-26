@@ -1,0 +1,22 @@
+{
+  "patterns": [
+    {
+      "id": "booking-conflict",
+      "signals": [
+        "double booking",
+        "overlap",
+        "reservation conflict"
+      ],
+      "likely_root_causes": [
+        "missing overlap validation",
+        "timezone mismatch",
+        "race condition during booking creation"
+      ],
+      "suggested_acceptance": [
+        "conflicting booking is rejected",
+        "non-conflicting booking is allowed",
+        "edge time boundaries are tested"
+      ]
+    }
+  ]
+}

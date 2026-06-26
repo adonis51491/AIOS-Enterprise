@@ -1,0 +1,34 @@
+policies:
+  branches:
+    main:
+      readonly: true
+    master:
+      readonly: true
+
+  files:
+    package.json:
+      approval_required: true
+    package-lock.json:
+      approval_required: true
+    pnpm-lock.yaml:
+      approval_required: true
+    yarn.lock:
+      approval_required: true
+    database/migrations:
+      approval_required: true
+    .env:
+      readonly: true
+    .env.local:
+      readonly: true
+
+  repository:
+    recursive_scan: false
+    git_history_scan: false
+    dependency_upgrade: approval_required
+    folder_rename: approval_required
+    unrelated_file_edit: forbidden
+
+  output:
+    require_runtime_report: true
+    require_acceptance_mapping: true
+    require_changed_files_list: true

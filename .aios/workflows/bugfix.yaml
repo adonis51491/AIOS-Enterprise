@@ -1,0 +1,57 @@
+workflow:
+  id: bugfix
+  name: Controlled Bug Fix
+  version: 1.0.0
+
+steps:
+  - id: plan
+    agent: planner
+    input:
+      - bug_file
+      - acceptance_file
+      - repository_index
+    output:
+      - root_cause
+      - allowed_files
+      - repair_plan
+      - acceptance_mapping
+
+  - id: implement
+    agent: coder
+    input:
+      - allowed_files
+      - repair_plan
+    output:
+      - diff_summary
+      - changed_files
+
+  - id: review
+    agent: reviewer
+    input:
+      - diff_summary
+      - changed_files
+      - acceptance_mapping
+    output:
+      - review_notes
+      - risk_level
+
+  - id: verify
+    agent: verifier
+    input:
+      - acceptance_mapping
+      - test_results
+    output:
+      - acceptance_score
+      - verification_report
+
+  - id: release
+    agent: release_manager
+    input:
+      - verification_report
+      - changed_files
+    output:
+      - version_update
+      - changelog
+      - release_notes
+      - commit_message
+      - pr_description
