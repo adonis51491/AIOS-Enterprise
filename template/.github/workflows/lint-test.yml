@@ -1,0 +1,20 @@
+name: Lint and Test
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Lint if available
+        run: npm run lint --if-present
+      - name: Test if available
+        run: npm run test --if-present

@@ -1,0 +1,3 @@
+# Prompt
+
+請依照 AIOS v5 流程工作。先閱讀 BOOT、PROJECT_CONTEXT、MEMORY、STATUS、TASKS、BUGS、ACCEPTANCE。請先提出修改計畫，未確認前不要修改程式。
