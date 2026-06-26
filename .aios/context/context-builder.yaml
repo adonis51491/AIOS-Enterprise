@@ -1,0 +1,24 @@
+context_builder:
+  version: 9.0.0
+  router: v4
+
+sources:
+  - bug_file
+  - acceptance_file
+  - repository_index
+  - git_branch
+  - git_status
+  - optional_console_log
+  - optional_test_log
+
+limits:
+  max_files: 8
+  max_folders: 4
+  recursive_scan: false
+  git_history_scan: false
+
+output:
+  - allowed_files
+  - affected_feature
+  - risk_scope
+  - context_summary

@@ -1,0 +1,29 @@
+daemon:
+  name: AIOS Daemon
+  version: 9.0.0
+  mode: local
+  status: scaffold
+
+watchers:
+  console:
+    enabled: true
+    source: .aios/logs/console.log
+  test:
+    enabled: true
+    source: .aios/logs/test.log
+  build:
+    enabled: true
+    source: .aios/logs/build.log
+  git:
+    enabled: true
+    include:
+      - branch
+      - status
+      - diff_summary
+
+events:
+  on_error_detected:
+    - create_bug
+    - create_acceptance
+    - build_context
+    - plan

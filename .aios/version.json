@@ -1,9 +1,9 @@
 {
   "name": "AIOS Enterprise",
-  "version": "8.1.0",
-  "codename": "RuntimeBridge",
+  "version": "9.0.1",
+  "codename": "BugHarvester Patch 1",
   "channel": "enterprise-lts",
-  "runtime": "v8.1",
-  "created_at": "2026-06-26T16:34:47",
-  "release_summary": "Adds installer, updater, project sync, and reusable runtime distribution flow."
+  "runtime": "v9.0.1",
+  "created_at": "2026-06-26T16:48:32",
+  "release_summary": "Fixes PowerShell variable interpolation in bug generation and adds stricter runtime validation."
 }

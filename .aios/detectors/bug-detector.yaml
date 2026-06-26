@@ -1,0 +1,29 @@
+bug_detector:
+  version: 9.0.0
+
+signals:
+  console_errors:
+    - "Error:"
+    - "TypeError"
+    - "ReferenceError"
+    - "Unhandled Runtime Error"
+    - "Module not found"
+    - "Hydration failed"
+    - "Build failed"
+
+  test_failures:
+    - "FAIL"
+    - "failed"
+    - "Expected"
+    - "Received"
+
+  git_signals:
+    branch_prefixes:
+      - "fix/"
+      - "bug/"
+      - "hotfix/"
+
+classification:
+  default_priority: Medium
+  default_type: Bug
+  output_folder: docs/bugs

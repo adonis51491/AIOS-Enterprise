@@ -1,11 +1,12 @@
 {
-  "version": "8.1.0",
-  "codename": "RuntimeBridge",
+  "version": "9.0.1",
+  "codename": "BugHarvester Patch 1",
   "sync_targets": [
     ".aios",
     "scripts",
     "templates",
-    "docs/runtime.md"
+    "docs/runtime.md",
+    "docs/auto-bug.md"
   ],
   "protected_targets": [
     ".git",
@@ -22,10 +23,13 @@
     "update",
     "sync",
     "doctor",
+    "bug",
+    "solve",
     "run",
     "release",
     "resume",
     "rollback",
-    "stats"
+    "stats",
+    "start"
   ]
 }

@@ -1,31 +1,25 @@
-# AIOS Enterprise v8.1
+# AIOS Enterprise v9.0.1
 
-Codename: RuntimeBridge
+Codename: BugHarvester Patch 1
 
-AIOS v8.1 turns AIOS from a copied template into a reusable runtime that can be installed, updated, and synced into application projects.
+This patch fixes the PowerShell parser error found in v9.0 and strengthens the runtime script.
 
-## Main Commands
+## Verify
 
 ```powershell
-pwsh scripts/aios.ps1 doctor
-pwsh scripts/aios.ps1 install -Source C:\GitHub\AIOS-Enterprise
-pwsh scripts/aios.ps1 update -Source C:\GitHub\AIOS-Enterprise
-pwsh scripts/aios.ps1 sync -Source C:\GitHub\AIOS-Enterprise
-pwsh scripts/aios.ps1 run BUG-001
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 doctor
 ```
 
-## Standard Usage
+## Generate Bug and Acceptance
 
-Keep this repository as the AIOS source:
-
-```text
-C:\GitHub\AIOS-Enterprise
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 bug BUG-001
 ```
 
-Then install or update runtime files into app projects:
+## Start Solve Workflow
 
-```text
-C:\GitHub\energy-v2-demo
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 solve BUG-001
 ```
 
-AIOS should manage runtime files only. It should not overwrite application code.
+The solve command creates missing bug and acceptance files, then prepares the AI CLI workflow.

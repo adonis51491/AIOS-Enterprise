@@ -1,33 +1,32 @@
 # Changelog
 
-## [8.1.0] - RuntimeBridge
+## [9.0.1] - BugHarvester Patch 1
+
+### Fixed
+
+- Corrected PowerShell interpolation of `${Id}:` in generated bug headings.
+- Prevented `InvalidVariableReferenceWithDrive` parser failure.
+- Improved positional command and target argument handling.
+- Improved source path validation and copy behavior.
+- `solve BUG-ID` now creates missing bug and acceptance files automatically.
 
 ### Added
 
-- Installer manifest
-- `aios install`
-- `aios update`
-- `aios sync`
-- Runtime distribution flow from AIOS-Enterprise to application repositories
-- Installer documentation
+- `Set-StrictMode -Version Latest`
+- Doctor health status and non-zero exit code when required files are missing.
+- Current Git branch is added to generated bug evidence when available.
 
-### Improved
-
-- Safer project-level runtime updates
-- Reduced manual Copy-Item mistakes
-- Clear source/target runtime separation
-
-## [8.0.0] - KernelForge
+## [9.0.0] - BugHarvester
 
 ### Added
 
-- AIOS Kernel architecture
-- Agent Manager
-- Workflow Engine
-- Policy Engine
-- Context Router v3
-- Memory Engine
-- Snapshot Recovery
-- Release Engine
-- Plugin SDK
-- Enterprise repository structure
+- AIOS Daemon scaffold
+- Bug Detector configuration
+- Acceptance Generator configuration
+- Context Builder v4 configuration
+- `aios bug`
+- `aios solve`
+- Auto-generated bug files
+- Auto-generated acceptance files
+- AIOS v9 solve prompt
+- Auto Bug documentation

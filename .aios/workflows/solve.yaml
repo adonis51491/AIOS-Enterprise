@@ -1,0 +1,35 @@
+workflow:
+  id: solve
+  name: Auto Solve
+  version: 9.0.0
+
+steps:
+  - id: detect
+    agent: bug_detector
+    output:
+      - detected_bug
+
+  - id: create_bug
+    agent: bug_generator
+    output:
+      - bug_file
+
+  - id: create_acceptance
+    agent: acceptance_generator
+    output:
+      - acceptance_file
+
+  - id: build_context
+    agent: context_builder
+    output:
+      - allowed_files
+      - context_summary
+
+  - id: plan
+    agent: planner
+    output:
+      - root_cause
+      - repair_plan
+      - acceptance_mapping
+
+stop_after_default: plan
