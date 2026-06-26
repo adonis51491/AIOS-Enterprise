@@ -1,27 +1,16 @@
 # Changelog
 
-## [9.1.0] - NightWatch
-
-### Added
-
-- Background log watcher
-- Windows Scheduled Task installer
-- Automatic error detection
-- Automatic bug file generation
-- Automatic acceptance file generation
-- Duplicate-error fingerprints
-- Bug processing queue
-- Ready-to-paste AI CLI prompt generation
-- Command capture wrapper for console, test, and build logs
-- Watcher install/start/stop/status/uninstall commands
-
-### Safety
-
-- NightWatch does not modify application code while unattended.
-- It records evidence and prepares the next AI workflow instead.
-
-## [9.0.1] - BugHarvester Patch 1
+## [9.1.4] - NightWatch Patch 4
 
 ### Fixed
 
-- PowerShell variable interpolation parser error.
+- Fixed Windows PowerShell 5.1 null binding error for `ConvertTo-Hashtable`.
+- Added `[AllowNull()]` to state conversion input.
+- Prevented state reset warnings caused by `null` values such as `last_bug_id` and `updated_at`.
+- Preserved duplicate fingerprint memory cleanly across polling cycles.
+
+## [9.1.3] - NightWatch Patch 3
+
+### Fixed
+
+- Fixed `PSObject.Properties.Count` compatibility issue.

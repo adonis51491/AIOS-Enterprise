@@ -1,0 +1,24 @@
+{
+  "aios.ps1": {
+    "strict_mode": true,
+    "bad_variable_colon_patterns": []
+  },
+  "aios-watch.ps1": {
+    "strict_mode": true,
+    "bad_variable_colon_patterns": []
+  },
+  "aios-capture.ps1": {
+    "strict_mode": true,
+    "bad_variable_colon_patterns": []
+  },
+  "aios-service.ps1": {
+    "strict_mode": true,
+    "bad_variable_colon_patterns": []
+  },
+  "features": {
+    "named_mutex": true,
+    "atomic_state_save": true,
+    "stable_fingerprint": true,
+    "actual_file_length_offset": true
+  }
+}

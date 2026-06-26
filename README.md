@@ -1,23 +1,15 @@
-# AIOS Enterprise v9.1
+# AIOS Enterprise v9.1.4
 
-Codename: NightWatch
+Codename: NightWatch Patch 4
 
-AIOS v9.1 adds unattended error monitoring and automatic bug documentation.
+This patch fixes the remaining Windows PowerShell 5.1 watcher state warning related to null values.
 
-## Background setup
+Expected watcher log after update:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 doctor
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 watch-install
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 watch-status
+```text
+Watcher started...
+Created BUG-AUTO-...
+Skipped duplicate fingerprint ...
 ```
 
-## Run monitored commands
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-capture.ps1 console npm run dev
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-capture.ps1 test npm test
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-capture.ps1 build npm run build
-```
-
-When an error is detected, AIOS automatically creates bug, acceptance, queue, and prompt files.
+There should be no repeating `State reset because it could not be read` messages.
