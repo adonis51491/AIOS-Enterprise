@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Daily Bug checklist generator
+- STATUS → BUGS → ACCEPTANCE routing
+- Automatic Bug priority selection
+- Bug-specific acceptance extraction
+- UTF-8 compatible PowerShell processing
+- `aios checklist` command
+- Checklist template and documentation
+
+### Fixed
+
+- Acceptance parser no longer captures unrelated sections
+- Bug parser supports Traditional Chinese Markdown
+- PowerShell output uses UTF-8 encoding
+
 ## [9.2.0] - Continuity
 
 ### Added

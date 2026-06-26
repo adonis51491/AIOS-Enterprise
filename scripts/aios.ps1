@@ -1,4 +1,4 @@
-param(
+﻿param(
   [Parameter(Position = 0)]
   [string]$Command = "doctor",
 
@@ -145,7 +145,10 @@ switch ($Command.ToLowerInvariant()) {
       ".aios/runtime/watch-state.json",
       "scripts/aios-watch.ps1",
       "scripts/aios-capture.ps1",
-      "scripts/aios-service.ps1"
+      "scripts/aios-service.ps1",
+      "scripts/aios-checklist.ps1",
+      "templates/reports/TODAY_CHECKLIST_TEMPLATE.md",
+      "docs/checklist.md"
     )
     $missing = 0
     foreach ($file in $requiredFiles) {
@@ -167,7 +170,7 @@ switch ($Command.ToLowerInvariant()) {
     Copy-AiosContent -From "$resolvedSource\scripts" -To ".\scripts"
     Copy-AiosContent -From "$resolvedSource\templates" -To ".\templates"
     Ensure-Directory -Path ".\docs"
-    foreach ($doc in @("runtime.md", "auto-bug.md", "nightwatch.md")) {
+    foreach ($doc in @("runtime.md", "auto-bug.md", "nightwatch.md", "checklist.md")) {
       if (Test-Path -LiteralPath "$resolvedSource\docs\$doc") {
         Copy-Item -LiteralPath "$resolvedSource\docs\$doc" -Destination ".\docs\$doc" -Force
       }
@@ -187,7 +190,7 @@ switch ($Command.ToLowerInvariant()) {
     Copy-AiosContent -From "$resolvedSource\scripts" -To ".\scripts"
     Copy-AiosContent -From "$resolvedSource\templates" -To ".\templates"
     Ensure-Directory -Path ".\docs"
-    foreach ($doc in @("runtime.md", "auto-bug.md", "nightwatch.md")) {
+    foreach ($doc in @("runtime.md", "auto-bug.md", "nightwatch.md", "checklist.md")) {
       if (Test-Path -LiteralPath "$resolvedSource\docs\$doc") {
         Copy-Item -LiteralPath "$resolvedSource\docs\$doc" -Destination ".\docs\$doc" -Force
       }
@@ -240,6 +243,26 @@ switch ($Command.ToLowerInvariant()) {
 
   "watch-once" {
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\aios-service.ps1" run-once -ProjectRoot (Get-Location).Path
+  }
+
+  "checklist" {
+    Write-Header -Text "Checklist"
+
+    $checklistScript = Join-Path $PSScriptRoot "aios-checklist.ps1"
+
+    if (-not (Test-Path -LiteralPath $checklistScript)) {
+      throw "Checklist script not found: $checklistScript"
+    }
+
+    & powershell.exe `
+      -NoProfile `
+      -ExecutionPolicy Bypass `
+      -File $checklistScript `
+      -ProjectRoot (Get-Location).Path
+
+    if ($LASTEXITCODE -ne 0) {
+      throw "Checklist generation failed with exit code $LASTEXITCODE"
+    }
   }
 
   "queue" {
