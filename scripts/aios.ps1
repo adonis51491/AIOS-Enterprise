@@ -1,6 +1,8 @@
 param(
   [string]$Command = "doctor",
-  [string]$Target = ""
+  [string]$Target = "",
+  [string]$Source = "",
+  [switch]$Force
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,6 +20,33 @@ function Test-File($path) {
   }
 }
 
+function Ensure-Dir($path) {
+  if (!(Test-Path $path)) {
+    New-Item -ItemType Directory -Path $path | Out-Null
+  }
+}
+
+function Copy-AiosContent($from, $to) {
+  if (!(Test-Path $from)) {
+    throw "Source not found: $from"
+  }
+  Ensure-Dir $to
+  Copy-Item "$from\*" $to -Recurse -Force
+}
+
+function Resolve-Source($Source) {
+  if ($Source -ne "") {
+    return $Source
+  }
+
+  $default = "C:\GitHub\AIOS-Enterprise"
+  if (Test-Path $default) {
+    return $default
+  }
+
+  throw "AIOS source not found. Use: pwsh scripts/aios.ps1 install -Source C:\GitHub\AIOS-Enterprise"
+}
+
 switch ($Command) {
   "doctor" {
     Write-Header "Doctor"
@@ -27,8 +56,54 @@ switch ($Command) {
     Test-File ".aios/workflows/bugfix.yaml"
     Test-File ".aios/policies/default.yaml"
     Test-File ".aios/version.json"
+    Test-File ".aios/installer/manifest.json"
     Write-Host ""
     Write-Host "AIOS doctor completed."
+  }
+
+  "install" {
+    Write-Header "Install"
+    $src = Resolve-Source $Source
+    Write-Host "Source: $src"
+    Write-Host "Target: $(Get-Location)"
+
+    Copy-AiosContent "$src\.aios" ".\.aios"
+    Copy-AiosContent "$src\scripts" ".\scripts"
+    Copy-AiosContent "$src\templates" ".\templates"
+
+    Ensure-Dir ".\docs"
+    if (Test-Path "$src\docs\runtime.md") {
+      Copy-Item "$src\docs\runtime.md" ".\docs\runtime.md" -Force
+    }
+
+    Write-Host "AIOS installed."
+  }
+
+  "update" {
+    Write-Header "Update"
+    $src = Resolve-Source $Source
+    Write-Host "Source: $src"
+    Write-Host "Target: $(Get-Location)"
+
+    Copy-AiosContent "$src\.aios" ".\.aios"
+    Copy-AiosContent "$src\scripts" ".\scripts"
+    Copy-AiosContent "$src\templates" ".\templates"
+
+    Ensure-Dir ".\docs"
+    if (Test-Path "$src\docs\runtime.md") {
+      Copy-Item "$src\docs\runtime.md" ".\docs\runtime.md" -Force
+    }
+
+    Write-Host "AIOS updated."
+  }
+
+  "sync" {
+    Write-Header "Sync"
+    $src = Resolve-Source $Source
+    Copy-AiosContent "$src\.aios" ".\.aios"
+    Copy-AiosContent "$src\scripts" ".\scripts"
+    Copy-AiosContent "$src\templates" ".\templates"
+    Write-Host "AIOS sync completed."
   }
 
   "run" {

@@ -1,41 +1,31 @@
-# AIOS Enterprise v8.0
+# AIOS Enterprise v8.1
 
-AIOS Enterprise v8 is an AI Agent Runtime Framework for safer, faster, and more repeatable AI-assisted software development.
+Codename: RuntimeBridge
 
-## Core Idea
+AIOS v8.1 turns AIOS from a copied template into a reusable runtime that can be installed, updated, and synced into application projects.
 
-AI should not freely scan and modify a repository.
+## Main Commands
 
-AIOS v8 gives AI:
-
-- Kernel
-- Runtime states
-- Workflow rules
-- Policy guardrails
-- Context routing
-- Memory
-- Snapshots
-- Release automation
-- Plugin interface
-
-## Standard Flow
-
-```text
-PLAN → IMPLEMENT → REVIEW → VERIFY → RELEASE → ARCHIVE
-```
-
-## Quick Start
-
-```bash
+```powershell
 pwsh scripts/aios.ps1 doctor
+pwsh scripts/aios.ps1 install -Source C:\GitHub\AIOS-Enterprise
+pwsh scripts/aios.ps1 update -Source C:\GitHub\AIOS-Enterprise
+pwsh scripts/aios.ps1 sync -Source C:\GitHub\AIOS-Enterprise
 pwsh scripts/aios.ps1 run BUG-001
-pwsh scripts/aios.ps1 release
 ```
 
-## CLI Prompt for Gemini / Codex / Claude Code
+## Standard Usage
 
-See:
+Keep this repository as the AIOS source:
 
 ```text
-templates/AIOS_V8_CLI_PROMPT.md
+C:\GitHub\AIOS-Enterprise
 ```
+
+Then install or update runtime files into app projects:
+
+```text
+C:\GitHub\energy-v2-demo
+```
+
+AIOS should manage runtime files only. It should not overwrite application code.

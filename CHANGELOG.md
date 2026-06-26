@@ -1,5 +1,22 @@
 # Changelog
 
+## [8.1.0] - RuntimeBridge
+
+### Added
+
+- Installer manifest
+- `aios install`
+- `aios update`
+- `aios sync`
+- Runtime distribution flow from AIOS-Enterprise to application repositories
+- Installer documentation
+
+### Improved
+
+- Safer project-level runtime updates
+- Reduced manual Copy-Item mistakes
+- Clear source/target runtime separation
+
 ## [8.0.0] - KernelForge
 
 ### Added
@@ -14,12 +31,3 @@
 - Release Engine
 - Plugin SDK
 - Enterprise repository structure
-
-### Changed
-
-- AIOS is now organized as an AI Operating System instead of a prompt-only runtime.
-
-### Fixed
-
-- Reduced risk of full repository scanning.
-- Added state lock and policy enforcement.

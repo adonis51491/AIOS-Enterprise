@@ -1,0 +1,31 @@
+{
+  "version": "8.1.0",
+  "codename": "RuntimeBridge",
+  "sync_targets": [
+    ".aios",
+    "scripts",
+    "templates",
+    "docs/runtime.md"
+  ],
+  "protected_targets": [
+    ".git",
+    "node_modules",
+    ".env",
+    ".env.local",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock"
+  ],
+  "commands": [
+    "install",
+    "update",
+    "sync",
+    "doctor",
+    "run",
+    "release",
+    "resume",
+    "rollback",
+    "stats"
+  ]
+}
