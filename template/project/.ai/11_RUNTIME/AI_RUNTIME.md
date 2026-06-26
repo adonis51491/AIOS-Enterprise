@@ -37,6 +37,27 @@ AI agents must follow this runtime sequence.
 13\. Update memory and reports
 
 
+## Branch Safety Check
+
+Before editing any code, AI must check the current Git branch.
+
+Required command:
+
+```bash
+git branch --show-current
+
+Rules:
+
+If current branch is main, stop immediately.
+If current branch starts with feature/aios, stop immediately.
+If current branch does not start with fix/, bugfix/, or hotfix/, stop and ask the human to create a proper bug branch.
+AI must not edit code on AIOS framework branches.
+AI must not mix AIOS framework changes with product bug fixes.
+
+Valid examples:
+fix/bug-001-booking-conflict
+bugfix/appointment-time-validation
+hotfix/payment-callback
 
 \## Forbidden Before Approval
 

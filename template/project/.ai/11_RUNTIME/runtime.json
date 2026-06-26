@@ -1,12 +1,23 @@
 {
-  "version": "6.6.0",
-  "codename": "Runtime Optimization",
+  "version": "6.6.1",
+  "codename": "Branch Safety Runtime",
   "maxFilesBeforeApproval": 8,
   "maxSearchResultsBeforeApproval": 5,
   "allowGlobalSearchBeforeApproval": false,
   "requireContextRouting": true,
   "requireReviewGate": true,
+  "requireBranchSafetyCheck": true,
   "requireHumanApprovalBeforeEdit": true,
+  "forbiddenBranchesForCodeEdit": [
+    "main",
+    "feature/aios-v5",
+    "feature/aios"
+  ],
+  "allowedBugfixBranchPrefixes": [
+    "fix/",
+    "bugfix/",
+    "hotfix/"
+  ],
   "requiredValidation": [
     "npm run build",
     "git diff --check"

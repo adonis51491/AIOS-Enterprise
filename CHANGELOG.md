@@ -1,5 +1,21 @@
 \# Changelog
 
+## v6.6.1
+
+### Added
+
+- Branch Safety Runtime
+- Required branch check before editing
+- Forbidden editing on main or AIOS framework branches
+- Allowed bugfix branch prefixes
+
+### Changed
+
+- Runtime now prevents mixing AIOS framework changes with product bug fixes
+
+---
+
+
 ## v6.6.0
 
 ### Added

@@ -1,4 +1,25 @@
 \
+# Branch Safety Rule
+
+Before editing any code, AI must run:
+
+```bash
+git branch --show-current
+AI must stop if current branch is:
+
+main
+feature/aios-v5
+any AIOS framework branch
+
+AI may only edit product code on branches starting with:
+
+fix/
+bugfix/
+hotfix/
+
+If the branch is invalid, AI must ask the human to create a proper bugfix branch.
+
+
 
 # AIOS Runtime v6.6 Rule
 
