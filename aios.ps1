@@ -56,30 +56,83 @@ switch ($Command) {
     "release" {
     $VersionPath = Join-Path $Root "version.json"
     $ChangelogPath = Join-Path $Root "CHANGELOG.md"
+    $ReleaseNotePath = Join-Path $Root "RELEASE_NOTE.md"
 
-    $NewVersion = Read-Host "New version, example 6.7.1"
-    $Codename = Read-Host "Codename"
-    $Summary = Read-Host "Release summary"
+    $Current = Get-Content $VersionPath -Raw | ConvertFrom-Json
+    $CurrentVersion = $Current.version
+
+    Write-Host "AIOS Release Engine v7"
+    Write-Host "Current version: $CurrentVersion"
+
+    $GitSummary = git log -10 --pretty=format:"%s"
+
+    $ReleaseType = "patch"
+
+    if ($GitSummary -match "BREAKING CHANGE|major") {
+        $ReleaseType = "major"
+    }
+    elseif ($GitSummary -match "^feat| feat") {
+        $ReleaseType = "minor"
+    }
+    elseif ($GitSummary -match "^fix| fix|^chore| chore|^docs| docs") {
+        $ReleaseType = "patch"
+    }
+
+    $Parts = $CurrentVersion.Split(".")
+    $Major = [int]$Parts[0]
+    $Minor = [int]$Parts[1]
+    $Patch = [int]$Parts[2]
+
+    if ($ReleaseType -eq "major") {
+        $Major += 1
+        $Minor = 0
+        $Patch = 0
+        $Codename = "Enterprise Runtime"
+    }
+    elseif ($ReleaseType -eq "minor") {
+        $Minor += 1
+        $Patch = 0
+        $Codename = "Runtime Intelligence"
+    }
+    else {
+        $Patch += 1
+        $Codename = "Maintenance Release"
+    }
+
+    $NewVersion = "$Major.$Minor.$Patch"
+    $Date = Get-Date -Format "yyyy-MM-dd"
+
+    $Summary = "Automated release generated from recent Git commits."
+
+    Write-Host ""
+    Write-Host "Detected release type: $ReleaseType"
+    Write-Host "Next version: $NewVersion"
+    Write-Host "Codename: $Codename"
+    Write-Host ""
 
     $VersionJson = @{
         name = "AIOS Enterprise"
         version = $NewVersion
         codename = $Codename
-        description = $Summary
+        description = "AIOS Enterprise $NewVersion - $Codename"
     } | ConvertTo-Json -Depth 3
 
     $VersionJson | Out-File -FilePath $VersionPath -Encoding utf8
-
-    $Date = Get-Date -Format "yyyy-MM-dd"
 
     $Entry = @"
 ## v$NewVersion
 
 Date: $Date
 
-### Added / Changed
+Codename: $Codename
 
-- $Summary
+### Summary
+
+$Summary
+
+### Recent Changes
+
+$GitSummary
 
 ---
 "@
@@ -91,6 +144,27 @@ Date: $Date
 
     ($Entry + "`n" + $Old) | Out-File -FilePath $ChangelogPath -Encoding utf8
 
-    Write-Host "Updated version.json and CHANGELOG.md to v$NewVersion"
+    $ReleaseNote = @"
+# AIOS Enterprise v$NewVersion
+
+Date: $Date
+
+Codename: $Codename
+
+## Summary
+
+$Summary
+
+## Recent Changes
+
+$GitSummary
+"@
+
+    $ReleaseNote | Out-File -FilePath $ReleaseNotePath -Encoding utf8
+
+    Write-Host "Updated:"
+    Write-Host "- version.json"
+    Write-Host "- CHANGELOG.md"
+    Write-Host "- RELEASE_NOTE.md"
 }
 }

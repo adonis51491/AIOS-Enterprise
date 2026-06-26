@@ -1,6 +1,6 @@
 ﻿{
-    "description":  "Add automated version and changelog update command",
+    "description":  "AIOS Enterprise 6.8.0 - Runtime Intelligence",
     "name":  "AIOS Enterprise",
-    "version":  "6.7.1",
-    "codename":  "Automated Release Metadata"
+    "version":  "6.8.0",
+    "codename":  "Runtime Intelligence"
 }
