@@ -1,6 +1,23 @@
 \# Changelog
 
 
+## v6.5.0
+
+### Added
+
+- Context Routing Rule
+- Token Budget Rules
+- Module Map
+- Appointment Context
+- Bug Review Gate
+
+### Changed
+
+- AI agents must read mapped context files before searching globally
+- AI agents must pass review gate before editing code
+
+---
+
 
 \## v6.1.2
 
