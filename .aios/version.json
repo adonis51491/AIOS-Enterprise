@@ -1,9 +1,9 @@
 {
   "name": "AIOS Enterprise",
-  "version": "9.1.0",
-  "codename": "NightWatch",
+  "version": "9.1.4",
+  "codename": "NightWatch Patch 4",
   "channel": "enterprise-lts",
-  "runtime": "v9.1",
-  "created_at": "2026-06-26T17:09:39",
-  "release_summary": "Adds unattended log watching, automatic bug and acceptance generation, queueing, and Windows scheduled-task service controls."
+  "runtime": "v9.1.4",
+  "created_at": "2026-06-26T17:38:16",
+  "release_summary": "Fixes null-value deserialization in Windows PowerShell 5.1 and preserves stable watcher state without reset noise."
 }
