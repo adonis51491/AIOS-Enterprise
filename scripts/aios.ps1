@@ -172,6 +172,11 @@ switch ($Command.ToLowerInvariant()) {
         Copy-Item -LiteralPath "$resolvedSource\docs\$doc" -Destination ".\docs\$doc" -Force
       }
     }
+    foreach ($rootFile in @("AIOS_START.md", "AIOS_HANDOFF.md")) {
+      if (Test-Path -LiteralPath "$resolvedSource\$rootFile") {
+        Copy-Item -LiteralPath "$resolvedSource\$rootFile" -Destination ".\$rootFile" -Force
+      }
+    }
     Write-Host "AIOS installed." -ForegroundColor Green
   }
 
@@ -185,6 +190,11 @@ switch ($Command.ToLowerInvariant()) {
     foreach ($doc in @("runtime.md", "auto-bug.md", "nightwatch.md")) {
       if (Test-Path -LiteralPath "$resolvedSource\docs\$doc") {
         Copy-Item -LiteralPath "$resolvedSource\docs\$doc" -Destination ".\docs\$doc" -Force
+      }
+    }
+    foreach ($rootFile in @("AIOS_START.md", "AIOS_HANDOFF.md")) {
+      if (Test-Path -LiteralPath "$resolvedSource\$rootFile") {
+        Copy-Item -LiteralPath "$resolvedSource\$rootFile" -Destination ".\$rootFile" -Force
       }
     }
     Write-Host "AIOS updated." -ForegroundColor Green
@@ -244,6 +254,20 @@ switch ($Command.ToLowerInvariant()) {
         Write-Host "$($data.bug_id) [$($data.status)] $($data.source_log)"
       }
     }
+  }
+
+  "handoff-update" {
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass `
+      -File ".\scripts\aios-handoff.ps1" `
+      -ProjectRoot (Get-Location).Path
+  }
+
+  "handoff-status" {
+    Write-Header -Text "Handoff Status"
+    if (-not (Test-Path -LiteralPath ".\.aios\runtime\project-state.json")) {
+      throw "Project state file is missing. Run handoff-update first."
+    }
+    Get-Content -LiteralPath ".\.aios\runtime\project-state.json" -Raw
   }
 
   default {

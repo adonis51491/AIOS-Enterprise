@@ -1,15 +1,26 @@
-# AIOS Enterprise v9.1.4
+# AIOS Enterprise v9.2.0
 
-Codename: NightWatch Patch 4
+Codename: Continuity
 
-This patch fixes the remaining Windows PowerShell 5.1 watcher state warning related to null values.
+AIOS v9.2.0 adds cross-chat continuity.
 
-Expected watcher log after update:
+## New files
 
-```text
-Watcher started...
-Created BUG-AUTO-...
-Skipped duplicate fingerprint ...
+- `AIOS_START.md`: startup rules for a new chat or CLI session
+- `AIOS_HANDOFF.md`: human-readable project history and handoff
+- `.aios/runtime/project-state.json`: machine-readable current state
+- `scripts/aios-handoff.ps1`: refreshes handoff and project state
+
+## New commands
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 handoff-update
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 handoff-status
 ```
 
-There should be no repeating `State reset because it could not be read` messages.
+## New chat instruction
+
+```text
+Read AIOS_START.md, AIOS_HANDOFF.md, .aios/version.json, and .aios/runtime/project-state.json first.
+Continue from the recorded next action.
+```

@@ -1,0 +1,9 @@
+{
+  "start_exists": true,
+  "handoff_exists": true,
+  "project_state_exists": true,
+  "handoff_script_exists": true,
+  "handoff_command": true,
+  "status_command": true,
+  "dynamic_version": true
+}

@@ -1,13 +1,15 @@
 {
-  "version": "9.1.4",
-  "codename": "NightWatch Patch 4",
+  "version": "9.2.0",
+  "codename": "Continuity",
   "sync_targets": [
     ".aios",
     "scripts",
     "templates",
     "docs/runtime.md",
     "docs/auto-bug.md",
-    "docs/nightwatch.md"
+    "docs/nightwatch.md",
+    "AIOS_START.md",
+    "AIOS_HANDOFF.md"
   ],
   "protected_targets": [
     ".git",
@@ -31,6 +33,8 @@
     "watch-status",
     "watch-uninstall",
     "watch-once",
-    "queue"
+    "queue",
+    "handoff-update",
+    "handoff-status"
   ]
 }
