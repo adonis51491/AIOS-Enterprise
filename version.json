@@ -1,5 +1,11 @@
 {
   "name": "AIOS Enterprise",
+  "version": "6.1.2",
+  "codename": "Installer Hardening",
+  "description": "Reusable AI development operating system for software projects."
+}
+{
+  "name": "AIOS Enterprise",
   "version": "6.1.1",
   "codename": "Documentation Foundation",
   "description": "Reusable AI development operating system for software projects."

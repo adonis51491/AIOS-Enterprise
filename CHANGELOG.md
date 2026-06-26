@@ -2,6 +2,36 @@
 
 
 
+\## v6.1.2
+
+
+
+\### Added
+
+
+
+\- Installer environment checks
+
+\- Existing `.ai` backup before install
+
+\- Installation log
+
+\- Installed version file `.aios-version.json`
+
+
+
+\### Changed
+
+
+
+\- Improved `install.ps1` reliability and feedback
+
+
+
+\---
+
+
+
 \## v6.1.1
 
 
