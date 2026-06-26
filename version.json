@@ -1,6 +1,6 @@
 ﻿{
-    "description":  "AIOS Enterprise 6.8.0 - Runtime Intelligence",
-    "name":  "AIOS Enterprise",
-    "version":  "6.8.0",
-    "codename":  "Runtime Intelligence"
+  "version": "9.3.0",
+  "codename": "Checklist Router",
+  "release_channel": "stable",
+  "release_summary": "Generate daily Bug repair checklists from STATUS, BUGS and ACCEPTANCE documents."
 }
