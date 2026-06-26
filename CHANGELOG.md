@@ -1,5 +1,21 @@
 \# Changelog
 
+## v6.7.0
+
+### Added
+
+- AIOS State file
+- Runtime State Machine
+- Phase-based workflow: PLAN, EDIT, VERIFY, REPORT, COMMIT
+
+### Changed
+
+- AI agents must obey current phase before taking action
+- PLAN phase now forbids editing code
+
+---
+
+
 ## v6.6.1
 
 ### Added

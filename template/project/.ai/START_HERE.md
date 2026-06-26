@@ -1,4 +1,16 @@
 \
+# State Machine Rule
+
+Before doing anything, read:
+
+- `.ai/STATE.md`
+- `.ai/12_STATE_MACHINE/STATE_MACHINE.md`
+
+AI must only perform actions allowed by the current phase.
+
+If current phase is PLAN, AI must produce a repair plan only and must not edit code.
+
+
 # Branch Safety Rule
 
 Before editing any code, AI must run:

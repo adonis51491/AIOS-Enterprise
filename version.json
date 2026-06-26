@@ -1,6 +1,6 @@
 {
   "name": "AIOS Enterprise",
-  "version": "6.6.1",
-  "codename": "Branch Safety Runtime",
-  "description": "Reusable AI development operating system with branch safety checks, runtime optimization, memory, context routing, and review gates."
+  "version": "6.7.0",
+  "codename": "Runtime State Machine",
+  "description": "Reusable AI development operating system with state machine runtime, branch safety, context routing, memory, and review gates."
 }

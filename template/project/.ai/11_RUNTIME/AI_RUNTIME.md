@@ -1,5 +1,15 @@
 \# AIOS Runtime
 
+# State Machine Requirement
+
+Before any action, AI must read:
+
+- `.ai/STATE.md`
+- `.ai/12_STATE_MACHINE/STATE_MACHINE.md`
+
+AI must obey the current phase in `.ai/STATE.md`.
+
+If current phase is PLAN, AI must not edit code.
 
 
 AI agents must follow this runtime sequence.
