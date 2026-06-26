@@ -1,25 +1,23 @@
-# AIOS Enterprise v9.0.1
+# AIOS Enterprise v9.1
 
-Codename: BugHarvester Patch 1
+Codename: NightWatch
 
-This patch fixes the PowerShell parser error found in v9.0 and strengthens the runtime script.
+AIOS v9.1 adds unattended error monitoring and automatic bug documentation.
 
-## Verify
+## Background setup
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 doctor
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 watch-install
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 watch-status
 ```
 
-## Generate Bug and Acceptance
+## Run monitored commands
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 bug BUG-001
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-capture.ps1 console npm run dev
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-capture.ps1 test npm test
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-capture.ps1 build npm run build
 ```
 
-## Start Solve Workflow
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios.ps1 solve BUG-001
-```
-
-The solve command creates missing bug and acceptance files, then prepares the AI CLI workflow.
+When an error is detected, AIOS automatically creates bug, acceptance, queue, and prompt files.

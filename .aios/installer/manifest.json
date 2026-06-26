@@ -1,12 +1,13 @@
 {
-  "version": "9.0.1",
-  "codename": "BugHarvester Patch 1",
+  "version": "9.1.0",
+  "codename": "NightWatch",
   "sync_targets": [
     ".aios",
     "scripts",
     "templates",
     "docs/runtime.md",
-    "docs/auto-bug.md"
+    "docs/auto-bug.md",
+    "docs/nightwatch.md"
   ],
   "protected_targets": [
     ".git",
@@ -21,15 +22,15 @@
   "commands": [
     "install",
     "update",
-    "sync",
     "doctor",
     "bug",
     "solve",
-    "run",
-    "release",
-    "resume",
-    "rollback",
-    "stats",
-    "start"
+    "watch-install",
+    "watch-start",
+    "watch-stop",
+    "watch-status",
+    "watch-uninstall",
+    "watch-once",
+    "queue"
   ]
 }

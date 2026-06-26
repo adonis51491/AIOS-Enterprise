@@ -1,0 +1,18 @@
+{
+  "aios.ps1": {
+    "bad_variable_colon_patterns": [],
+    "strict_mode": true
+  },
+  "aios-watch.ps1": {
+    "bad_variable_colon_patterns": [],
+    "strict_mode": true
+  },
+  "aios-capture.ps1": {
+    "bad_variable_colon_patterns": [],
+    "strict_mode": true
+  },
+  "aios-service.ps1": {
+    "bad_variable_colon_patterns": [],
+    "strict_mode": true
+  }
+}
