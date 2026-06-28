@@ -1,0 +1,7 @@
+rules:
+  main_branch: readonly
+  env_files: forbidden
+  package_files: approval_required
+  lock_files: approval_required
+  gitignore: approval_required
+  merge: human_only

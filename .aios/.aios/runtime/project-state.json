@@ -1,0 +1,6 @@
+{
+  "version": "10.0.0",
+  "phase": "PLAN",
+  "mode": "semi-auto",
+  "merge": "human-only"
+}

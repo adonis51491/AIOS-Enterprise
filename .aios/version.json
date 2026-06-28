@@ -1,7 +1,6 @@
-﻿{
-  "version": "9.2.0",
-  "codename": "Codex Bridge",
-  "runtime_version": "9.2.0",
-  "release_channel": "stable",
-  "release_summary": "Document-driven bug routing, Codex governance, checklist generation, safe project deployment, and NightWatch baseline."
+{
+  "name": "AIOS Enterprise",
+  "version": "10.0.2",
+  "codename": "Clean Installer Patch",
+  "channel": "stable"
 }

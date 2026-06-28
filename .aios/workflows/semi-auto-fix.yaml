@@ -1,0 +1,14 @@
+name: semi-auto-fix
+version: 10.0.2
+steps:
+  - detect
+  - queue
+  - plan
+  - human_approval
+  - implement
+  - validate
+  - commit
+  - push
+  - pull_request
+stop_before:
+  - merge

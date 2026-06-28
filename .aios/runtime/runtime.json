@@ -1,0 +1,11 @@
+{
+  "version": "10.0.2",
+  "mode": "semi-auto",
+  "requireHumanApprovalBeforeEdit": true,
+  "allowDirectMainEdits": false,
+  "autoMerge": false,
+  "requiredValidation": [
+    "npm.cmd run build",
+    "git diff --check"
+  ]
+}

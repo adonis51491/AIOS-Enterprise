@@ -1,6 +1,7 @@
 {
   "name": "AIOS Enterprise",
-  "version": "9.2.1",
-  "codename": "Semi-Auto Fix",
-  "summary": "Adds a guarded semi-automatic bug repair workflow for Codex: detect queue, plan, wait for approval, implement, validate, commit, push, and open PR without merging."
+  "version": "10.0.2",
+  "codename": "Clean Installer Patch",
+  "channel": "stable",
+  "summary": "Fixes PowerShell parameter binding and provides verified install/deploy paths."
 }

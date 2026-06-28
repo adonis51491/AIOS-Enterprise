@@ -1,0 +1,6 @@
+{
+  "name": "AIOS Enterprise",
+  "version": "10.0.0",
+  "codename": "OneClick Semi-Auto",
+  "description": "Clean distributable AIOS runtime with semi-auto bug fix workflow, Codex bridge, NightWatch handoff, and one-click install/deploy scripts."
+}

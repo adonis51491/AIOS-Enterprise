@@ -1,24 +1,11 @@
 name: semi-auto-fix
-version: 9.2.1
-mode: guarded
-phases:
-  - id: detect
-    description: Read latest AIOS queue item and matching bug files.
-  - id: plan
-    description: Produce repair plan only.
-    requires_human_approval: true
-  - id: implement
-    description: Modify approved files only.
-  - id: validate
-    commands:
-      - npm.cmd run build
-      - git diff --check
-  - id: pr
-    description: Commit, push, and create PR without merge.
-forbidden:
-  - direct-main-edit
-  - auto-merge
-  - env-edit
-  - package-upgrade-without-approval
-  - lockfile-edit-without-approval
-  - gitignore-edit-without-approval
+trigger: manual_or_queue
+steps:
+  - read_queue
+  - plan
+  - wait_for_human_approval
+  - implement
+  - validate
+  - commit_push
+  - create_pr
+  - stop_before_merge

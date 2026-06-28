@@ -1,34 +1,13 @@
-# AIOS Enterprise v9.2.1 — Semi-Auto Fix
+# AIOS Enterprise v10.0.2
 
-This package adds a guarded semi-automatic repair workflow for AIOS + Codex.
+Semi-automatic bug repair runtime:
 
-## Flow
+`detect → queue → plan → approval → implement → validate → PR → human merge`
 
-```text
-NightWatch / Queue
-→ Semi-Auto PLAN
-→ Human APPROVED
-→ Codex IMPLEMENT
-→ Build / diff check
-→ Commit + Push
-→ Pull Request
-→ Human Merge
-```
-
-## Safety Defaults
-
-- Never edit `main`.
-- Never merge automatically.
-- Never modify `.env`, package files, lock files, or `.gitignore` without explicit approval.
-- Never process unrelated bugs.
-- Always stop after PLAN until human approval.
-- Always create PR for review.
-
-## Main Commands
+Main commands:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-semi-auto.ps1 plan
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-semi-auto.ps1 implement
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-semi-auto.ps1 validate
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-semi-auto.ps1 pr
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-v10.ps1 doctor
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-v10.ps1 plan
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-v10.ps1 approved
 ```

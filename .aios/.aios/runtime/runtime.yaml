@@ -1,0 +1,10 @@
+version: 10.0.0
+codename: OneClick Semi-Auto
+mode: semi-auto
+phases:
+  - PLAN
+  - APPROVAL
+  - IMPLEMENT
+  - VALIDATE
+  - PR
+  - HUMAN_MERGE
