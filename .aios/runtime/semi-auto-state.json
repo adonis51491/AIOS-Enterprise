@@ -1,0 +1,9 @@
+﻿{
+  "workflow": "semi-auto-fix",
+  "version": "9.2.1",
+  "phase": "idle",
+  "approval_keyword": "APPROVED",
+  "auto_merge": false,
+  "last_bug_id": null,
+  "last_branch": null
+}

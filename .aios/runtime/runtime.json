@@ -1,0 +1,37 @@
+﻿{
+  "version": "10.0.2",
+  "codename": "Source Consolidation",
+  "mode": "semi-auto",
+  "stateMachine": [
+    "PLAN",
+    "APPROVED",
+    "IMPLEMENT",
+    "VALIDATE",
+    "PULL_REQUEST",
+    "HUMAN_MERGE"
+  ],
+  "requireHumanApprovalBeforeEdit": true,
+  "allowDirectMainEdits": false,
+  "allowAutoMerge": false,
+  "allowPackageUpgradeWithoutApproval": false,
+  "allowEnvironmentFileChanges": false,
+  "maxActiveTasks": 1,
+  "requiredValidation": [
+    "npm.cmd run build",
+    "git diff --check"
+  ],
+  "protectedFiles": [
+    ".env",
+    ".env.local",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock"
+  ],
+  "allowedBranchPrefixes": [
+    "fix/",
+    "bugfix/",
+    "hotfix/",
+    "feat/"
+  ]
+}
