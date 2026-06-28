@@ -1,26 +1,12 @@
-runtime:
-  states:
-    - INIT
-    - PLAN
-    - IMPLEMENT
-    - REVIEW
-    - VERIFY
-    - RELEASE
-    - ARCHIVE
-
-timeouts_seconds:
-  PLAN: 180
-  IMPLEMENT: 300
-  REVIEW: 180
-  VERIFY: 180
-  RELEASE: 120
-
-failure_policy:
-  on_timeout: output_partial_result
-  on_policy_violation: stop
-  on_missing_acceptance: stop
-  on_unknown_scope: ask_for_scope
-
-resume:
-  enabled: true
-  source: .aios/snapshots/latest.json
+﻿runtime:
+  shell: "PowerShell"
+  minimum_powershell: "5.1"
+  encoding: "UTF-8"
+  generated_paths:
+    - ".aios/reports/"
+    - ".aios/queue/"
+    - ".aios/inbox/"
+  state_files:
+    - ".aios/runtime/project-state.json"
+    - ".aios/runtime/watch-state.json"
+  preserve_on_update: true

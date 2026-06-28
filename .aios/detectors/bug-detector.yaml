@@ -1,31 +1,12 @@
-bug_detector:
-  version: 9.1.0
-  poll_seconds: 5
-  quiet_seconds: 10
-  duplicate_window_minutes: 60
-  max_evidence_lines: 80
-
-watch_files:
-  - .aios/logs/console.log
-  - .aios/logs/test.log
-  - .aios/logs/build.log
-
-signals:
-  regex:
-    - "(?i)Unhandled Runtime Error"
-    - "(?i)TypeError:"
-    - "(?i)ReferenceError:"
-    - "(?i)SyntaxError:"
-    - "(?i)Module not found"
-    - "(?i)Build failed"
-    - "(?i)Failed to compile"
-    - "(?i)\bFAIL\b"
-    - "(?i)Test Suites:.*failed"
-    - "(?i)npm ERR!"
-    - "(?i)ERR_[A-Z_]+"
-
-ignore:
-  regex:
-    - "(?i)warning"
-    - "(?i)deprecated"
-    - "(?i)source map"
+﻿detector:
+  patterns:
+    - "TypeError"
+    - "ReferenceError"
+    - "Unhandled"
+    - "HTTP 500"
+    - "HTTP 502"
+  deduplicate_by:
+    - fingerprint
+  ignore_patterns:
+    - "NightWatch clean test"
+    - "synthetic test"

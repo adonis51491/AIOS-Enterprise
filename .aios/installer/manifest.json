@@ -1,40 +1,32 @@
-{
-  "version": "9.2.0",
-  "codename": "Continuity",
-  "sync_targets": [
-    ".aios",
+﻿{
+  "schema_version": 1,
+  "managed_files": [
+    ".aios/aios.config.yaml",
+    ".aios/version.json",
+    ".aios/kernel",
+    ".aios/policies",
+    ".aios/workflows",
+    ".aios/installer",
+    ".aios/daemon",
+    ".aios/detectors",
+    ".aios/generators",
+    ".aios/context",
+    ".aios/prompts",
+    ".aios/runtime/runtime.yaml",
     "scripts",
     "templates",
-    "docs/runtime.md",
-    "docs/auto-bug.md",
-    "docs/nightwatch.md",
+    "docs/checklist.md",
+    "docs/codex-aios-workflow.md",
+    "AGENTS.md",
     "AIOS_START.md",
     "AIOS_HANDOFF.md"
   ],
-  "protected_targets": [
-    ".git",
-    "node_modules",
-    ".env",
-    ".env.local",
-    "package.json",
-    "package-lock.json",
-    "pnpm-lock.yaml",
-    "yarn.lock"
-  ],
-  "commands": [
-    "install",
-    "update",
-    "doctor",
-    "bug",
-    "solve",
-    "watch-install",
-    "watch-start",
-    "watch-stop",
-    "watch-status",
-    "watch-uninstall",
-    "watch-once",
-    "queue",
-    "handoff-update",
-    "handoff-status"
+  "preserve_paths": [
+    ".aios/reports",
+    ".aios/queue",
+    ".aios/inbox",
+    ".aios/logs",
+    ".aios/runtime/project-state.json",
+    ".aios/runtime/watch-state.json"
   ]
 }

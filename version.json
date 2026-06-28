@@ -1,6 +1,6 @@
-﻿{
-  "version": "9.3.0",
-  "codename": "Checklist Router",
-  "release_channel": "stable",
-  "release_summary": "Generate daily Bug repair checklists from STATUS, BUGS and ACCEPTANCE documents."
+{
+  "name": "AIOS Enterprise",
+  "version": "9.2.1",
+  "codename": "Semi-Auto Fix",
+  "summary": "Adds a guarded semi-automatic bug repair workflow for Codex: detect queue, plan, wait for approval, implement, validate, commit, push, and open PR without merging."
 }

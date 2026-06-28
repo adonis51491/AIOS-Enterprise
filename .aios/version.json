@@ -1,9 +1,7 @@
-{
-  "name": "AIOS Enterprise",
+﻿{
   "version": "9.2.0",
-  "codename": "Continuity",
-  "channel": "enterprise-lts",
-  "runtime": "v9.2",
-  "created_at": "2026-06-26T17:57:42",
-  "release_summary": "Adds cross-chat continuity through startup, handoff, and machine-readable project state files."
+  "codename": "Codex Bridge",
+  "runtime_version": "9.2.0",
+  "release_channel": "stable",
+  "release_summary": "Document-driven bug routing, Codex governance, checklist generation, safe project deployment, and NightWatch baseline."
 }

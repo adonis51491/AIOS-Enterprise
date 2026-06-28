@@ -1,88 +1,31 @@
-\# AIOS Checklist Generator
+﻿# Checklist Generator
 
+## Sources
 
+- `STATUS.md`: priority
+- `BUGS.md`: specification
+- `ACCEPTANCE.md`: acceptance
 
-\## Purpose
-
-
-
-Generate today's repair checklist from:
-
-
-
-1\. `STATUS.md`
-
-2\. `BUGS.md`
-
-3\. `ACCEPTANCE.md`
-
-
-
-\## Source Contract
-
-
-
-\- `STATUS.md` is the only priority source.
-
-\- `BUGS.md` is the only Bug specification source.
-
-\- `ACCEPTANCE.md` is the only acceptance source.
-
-
-
-\## Required Format
-
-
-
-Bug heading:
-
-
+## Required headings
 
 ```markdown
+## BUG-001：問題名稱
+```
 
-\## BUG-001：Bug title
+```markdown
+## 八、1-7 預約衝突（BUG-001）
+```
 
-Acceptance heading:
+The Bug ID must appear on the same acceptance heading line.
 
+## Command
 
-
-\## 八、1-7 預約衝突（BUG-001）
-
-
-
-The Bug ID must appear on the same heading line.
-
-
-
-Command
-
+```powershell
 powershell -NoProfile -ExecutionPolicy Bypass `
-
-\-File scripts\\aios.ps1 `
-
+-File scripts\aios.ps1 `
 checklist
+```
 
-Output
+## Output
 
-.aios/reports/TODAY\_CHECKLIST.md
-
-Status Values
-
-NOT\_TESTED
-
-PASS
-
-FAIL
-
-BLOCKED
-
-HUMAN\_CHECK\_REQUIRED
-
-MISSING
-
-
-
-\---
-
-
-
+`.aios/reports/TODAY_CHECKLIST.md`

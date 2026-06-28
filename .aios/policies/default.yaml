@@ -1,34 +1,22 @@
-policies:
-  branches:
-    main:
-      readonly: true
-    master:
-      readonly: true
-
-  files:
-    package.json:
-      approval_required: true
-    package-lock.json:
-      approval_required: true
-    pnpm-lock.yaml:
-      approval_required: true
-    yarn.lock:
-      approval_required: true
-    database/migrations:
-      approval_required: true
-    .env:
-      readonly: true
-    .env.local:
-      readonly: true
-
-  repository:
-    recursive_scan: false
-    git_history_scan: false
-    dependency_upgrade: approval_required
-    folder_rename: approval_required
-    unrelated_file_edit: forbidden
-
-  output:
-    require_runtime_report: true
-    require_acceptance_mapping: true
-    require_changed_files_list: true
+﻿policies:
+  plan:
+    edit_files: false
+    install_packages: false
+    upgrade_packages: false
+    read_full_git_history: false
+    scan_whole_repository: false
+  implement:
+    require_explicit_approval: true
+    edit_only_approved_files: true
+    commit: false
+    push: false
+  protected:
+    - ".env"
+    - ".env.*"
+    - "package.json"
+    - "package-lock.json"
+    - "pnpm-lock.yaml"
+    - "yarn.lock"
+  validation:
+    evidence_required_for_pass: true
+    ui_checks_status: "HUMAN_CHECK_REQUIRED"

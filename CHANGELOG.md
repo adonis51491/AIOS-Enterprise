@@ -1,42 +1,21 @@
-# Changelog
+﻿# Changelog
 
-## Unreleased
-
-### Added
-
-- Daily Bug checklist generator
-- STATUS → BUGS → ACCEPTANCE routing
-- Automatic Bug priority selection
-- Bug-specific acceptance extraction
-- UTF-8 compatible PowerShell processing
-- `aios checklist` command
-- Checklist template and documentation
-
-### Fixed
-
-- Acceptance parser no longer captures unrelated sections
-- Bug parser supports Traditional Chinese Markdown
-- PowerShell output uses UTF-8 encoding
-
-## [9.2.0] - Continuity
+## 9.2.0 — Codex Bridge
 
 ### Added
 
-- Dynamic startup file for new chats
-- Human-readable project handoff
-- Machine-readable project state
-- Automatic handoff updater
-- `handoff-update`
-- `handoff-status`
-- Cross-chat continuity documentation
-
-### Changed
-
-- New sessions no longer depend on the previous chat transcript.
-- Version detection remains dynamic through `.aios/version.json`.
-
-## [9.1.4] - NightWatch Patch 4
+- Document-driven checklist generator
+- Safe AIOS install and update
+- Codex `AGENTS.md` governance
+- PLAN / IMPLEMENT / VALIDATE prompts
+- Project deployment script
+- NightWatch deduplication baseline
+- UTF-8 PowerShell 5.1 compatibility
+- Doctor checks for checklist and Codex integration
 
 ### Fixed
 
-- Null-value state deserialization in Windows PowerShell 5.1.
+- Acceptance parser stops at the next second-level heading
+- Acceptance Bug ID must be on the same heading line
+- Generated checklist no longer captures unrelated sections
+- Runtime state and generated reports are preserved during updates

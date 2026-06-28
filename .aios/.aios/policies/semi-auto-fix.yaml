@@ -1,0 +1,29 @@
+policy: semi-auto-fix
+version: 9.2.1
+branch_rules:
+  forbidden_branches:
+    - main
+  allowed_prefixes:
+    - fix/auto-
+    - fix/
+    - bugfix/
+    - hotfix/
+file_rules:
+  protected:
+    - .env
+    - .env.local
+    - package.json
+    - package-lock.json
+    - pnpm-lock.yaml
+    - yarn.lock
+    - .gitignore
+  require_explicit_approval:
+    - prisma/migrations/**
+    - scripts/deploy/**
+validation:
+  required:
+    - npm.cmd run build
+    - git diff --check
+merge:
+  auto_merge: false
+  require_human_review: true

@@ -1,18 +1,9 @@
-acceptance_generator:
-  version: 9.0.0
-  output_folder: docs/acceptance
-
-rules:
-  include:
-    - observed_behavior
-    - expected_behavior
-    - regression_guard
-    - verification_steps
-    - acceptance_mapping
-
-defaults:
-  - The reported issue is reproduced or clearly explained.
-  - The root cause is identified.
-  - The fix changes only allowed files.
-  - Existing behavior outside the affected scope is not changed.
-  - Verification result is documented.
+﻿generator:
+  require_bug_id_in_heading: true
+  statuses:
+    - PASS
+    - FAIL
+    - NOT_TESTED
+    - BLOCKED
+    - HUMAN_CHECK_REQUIRED
+    - MISSING

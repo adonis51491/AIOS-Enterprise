@@ -1,39 +1,7 @@
-{
-  "schema_version": "1.0",
-  "project": {
-    "name": "energy-v2-demo",
-    "path": "C:\\GitHub\\energy-v2-demo",
-    "aios_source": "C:\\GitHub\\AIOS-Enterprise"
-  },
-  "aios": {
-    "version": "9.2.0",
-    "codename": "Continuity",
-    "runtime": "v9.2",
-    "channel": "enterprise-lts"
-  },
-  "git": {
-    "branch": "unknown",
-    "working_tree": "unknown"
-  },
-  "nightwatch": {
-    "installed": null,
-    "state": "unknown",
-    "last_bug_id": null
-  },
-  "runtime": {
-    "phase": "PLAN",
-    "latest_queued_bug": null,
-    "latest_bug_file": null,
-    "latest_acceptance_file": null
-  },
-  "completed": [
-    "AIOS runtime installation flow",
-    "Automatic bug and acceptance generation",
-    "NightWatch scheduled task",
-    "Duplicate error fingerprint protection",
-    "Cross-chat startup and handoff files"
-  ],
-  "known_issues": [],
-  "next_action": "Run handoff-update in the application repository, then process the latest queued bug under PLAN.",
+﻿{
+  "schema_version": 1,
+  "project": null,
+  "current_phase": "IDLE",
+  "selected_bug_id": null,
   "updated_at": null
 }
