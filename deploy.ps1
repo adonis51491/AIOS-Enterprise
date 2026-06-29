@@ -43,7 +43,8 @@ $runtimeFiles = @(
     ".aios\prompts\AUTO_FIX.md",
     ".aios\prompts\AUTO_FIX_APPROVED.md",
     "scripts\aios-v10.ps1",
-    "docs\auto-queue.md"
+    "docs\auto-queue.md",
+    "docs\auto-run.md"
 )
 
 foreach ($item in $runtimeFiles) {

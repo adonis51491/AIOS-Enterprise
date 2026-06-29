@@ -19,3 +19,11 @@ Auto queue:
 4. Read the generated `.aios/queue/<ID>.json`, `.aios/inbox/<ID>-PROMPT.md`, `docs/bugs/<ID>.md`, and `docs/acceptance/<ID>.md` before implementation.
 5. Use `complete-current` only after validation passes.
 6. Use `skip-current` only when the queued item is intentionally deferred.
+
+Full auto repair:
+
+1. Use `auto-run` only on a non-main branch or when it can create `fix/<TASK-ID>-auto` from main.
+2. Use `auto-status` to inspect `.aios/runtime/auto-run-state.json` before resuming.
+3. Use `auto-resume` only after implementation changes are present and safe to validate.
+4. Use `auto-stop` to halt automation without deleting queue state.
+5. Never auto-merge. Human merge remains required after checks pass and the PR is ready for review.
