@@ -15,23 +15,6 @@ function Resolve-AIOSPath([string]$Relative) {
     return Join-Path -Path $Root -ChildPath $Relative
 }
 
-function Get-AIOSTimestamp {
-    return Get-Date -Format "yyyyMMdd-HHmmss"
-}
-
-function ConvertTo-AIOSSlug([string]$Text) {
-    $slug = $Text.ToLowerInvariant()
-    $slug = [regex]::Replace($slug, "[^a-z0-9]+", "-")
-    $slug = $slug.Trim("-")
-    if ([string]::IsNullOrWhiteSpace($slug)) {
-        return "status-item"
-    }
-    if ($slug.Length -gt 48) {
-        return $slug.Substring(0, 48).Trim("-")
-    }
-    return $slug
-}
-
 function Ensure-AIOSDirectory([string]$Relative) {
     $path = Resolve-AIOSPath $Relative
     if (-not (Test-Path -LiteralPath $path)) {
@@ -74,19 +57,65 @@ function Assert-NoCurrentQueueItem {
     }
 }
 
+function Test-StatusLineCompleted([string]$Line) {
+    if ($Line -match "(?i)\[[x]\]") {
+        return $true
+    }
+    return $Line -match "(?i)(^|[^A-Z])(DONE|COMPLETED|CLOSED|SKIPPED)([^A-Z]|$)"
+}
+
+function Get-StatusSearchRanges([string[]]$Lines) {
+    $workOrderHeading = -join ([char[]]@(0x5DE5,0x4F5C,0x9806,0x5E8F))
+    $explicitOrderHeading = -join ([char[]]@(0x660E,0x78BA,0x6392,0x5E8F,0x6E05,0x55AE))
+    $priorityHeadings = @("Current Sprint", $workOrderHeading, $explicitOrderHeading)
+    $ranges = @()
+
+    for ($i = 0; $i -lt $Lines.Count; $i++) {
+        foreach ($heading in $priorityHeadings) {
+            if ($Lines[$i] -match [regex]::Escape($heading)) {
+                $end = $Lines.Count - 1
+                for ($j = $i + 1; $j -lt $Lines.Count; $j++) {
+                    if ($Lines[$j] -match "^\s{0,3}#{1,6}\s+") {
+                        $end = $j - 1
+                        break
+                    }
+                }
+                $ranges += [pscustomobject]@{ Start = $i + 1; End = $end }
+                break
+            }
+        }
+    }
+
+    if ($ranges.Count -gt 0) {
+        return $ranges
+    }
+
+    return @([pscustomobject]@{ Start = 0; End = $Lines.Count - 1 })
+}
+
 function Get-NextStatusItem {
     $statusPath = Resolve-AIOSPath "STATUS.md"
     if (-not (Test-Path -LiteralPath $statusPath)) {
         throw "STATUS.md not found in target project: $statusPath"
     }
 
-    $lines = Get-Content -LiteralPath $statusPath -Encoding UTF8
-    for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ($lines[$i] -match "^\s*[-*]\s+\[\s\]\s+(.+?)\s*$") {
+    $lines = @(Get-Content -LiteralPath $statusPath -Encoding UTF8)
+    $idPattern = "(?i)\b(CONTEST-\d+|BUG-\d+)\b"
+    foreach ($range in (Get-StatusSearchRanges $lines)) {
+        for ($i = $range.Start; $i -le $range.End; $i++) {
+            $line = $lines[$i]
+            $idMatch = [regex]::Match($line, $idPattern)
+            if (-not $idMatch.Success) {
+                continue
+            }
+            if (Test-StatusLineCompleted $line) {
+                continue
+            }
             return [pscustomobject]@{
+                Id = $idMatch.Groups[1].Value.ToUpperInvariant()
                 LineNumber = $i + 1
-                Text = $Matches[1].Trim()
-                Raw = $lines[$i]
+                Text = $line.Trim()
+                Raw = $line
             }
         }
     }
@@ -102,6 +131,15 @@ function Write-NewFile([string]$Path, [string]$Content) {
 }
 
 function Save-QueueItem([string]$Path, $Item) {
+    if (Test-Path -LiteralPath $Path) {
+        throw "Refusing to overwrite existing queue file: $Path"
+    }
+    $json = $Item | ConvertTo-Json -Depth 8
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($Path, ($json + [Environment]::NewLine), $utf8NoBom)
+}
+
+function Update-ExistingQueueItem([string]$Path, $Item) {
     $json = $Item | ConvertTo-Json -Depth 8
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
     [System.IO.File]::WriteAllText($Path, ($json + [Environment]::NewLine), $utf8NoBom)
@@ -118,14 +156,25 @@ function Get-SingleCurrentQueueItem {
     return $current[0]
 }
 
-function Update-StatusLine([int]$LineNumber, [string]$Marker) {
+function Update-StatusLine([int]$LineNumber, [string]$State) {
     $statusPath = Resolve-AIOSPath "STATUS.md"
     $lines = @(Get-Content -LiteralPath $statusPath -Encoding UTF8)
     $index = $LineNumber - 1
     if ($index -lt 0 -or $index -ge $lines.Count) {
         throw "STATUS.md line $LineNumber is no longer available."
     }
-    $lines[$index] = [regex]::Replace($lines[$index], "^(\s*[-*]\s+)\[[^\]]*\]", "`${1}[$Marker]", 1)
+
+    if ($lines[$index] -match "^(\s*[-*]\s+)\[[^\]]*\]") {
+        $marker = if ($State -eq "completed") { "x" } else { "-" }
+        $lines[$index] = [regex]::Replace($lines[$index], "^(\s*[-*]\s+)\[[^\]]*\]", "`${1}[$marker]", 1)
+    }
+    elseif ($State -eq "completed") {
+        $lines[$index] = "$($lines[$index]) - DONE"
+    }
+    else {
+        $lines[$index] = "$($lines[$index]) - SKIPPED"
+    }
+
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
     [System.IO.File]::WriteAllText($statusPath, (($lines -join [Environment]::NewLine) + [Environment]::NewLine), $utf8NoBom)
 }
@@ -163,26 +212,24 @@ function Invoke-EnqueueNext {
     Assert-NoCurrentQueueItem
     $next = Get-NextStatusItem
     if ($null -eq $next) {
-        Write-Host "No incomplete STATUS.md item found."
+        Write-Host "NO_ELIGIBLE_STATUS_ITEM"
         return
     }
 
-    $stamp = Get-AIOSTimestamp
-    $slug = ConvertTo-AIOSSlug $next.Text
-    $id = "BUG-$stamp-$slug"
-
-    $bugRoot = Ensure-AIOSDirectory ".aios\bugs"
-    $acceptanceRoot = Ensure-AIOSDirectory ".aios\acceptance"
+    $id = $next.Id
+    $bugRoot = Ensure-AIOSDirectory "docs\bugs"
+    $acceptanceRoot = Ensure-AIOSDirectory "docs\acceptance"
     $queueRoot = Ensure-AIOSDirectory ".aios\queue"
     $inboxRoot = Ensure-AIOSDirectory ".aios\inbox"
 
     $bugPath = Join-Path $bugRoot "$id.md"
     $acceptancePath = Join-Path $acceptanceRoot "$id.md"
     $queuePath = Join-Path $queueRoot "$id.json"
-    $inboxPath = Join-Path $inboxRoot "$id.md"
+    $inboxPath = Join-Path $inboxRoot "$id-PROMPT.md"
 
     $createdAt = (Get-Date).ToString("o")
-    $bugContent = @"
+    if (-not (Test-Path -LiteralPath $bugPath)) {
+        $bugContent = @"
 # $id
 
 Source: STATUS.md line $($next.LineNumber)
@@ -191,16 +238,20 @@ Created: $createdAt
 
 ## Bug
 
-Implement the next queued STATUS.md item without changing unrelated project behavior.
+Implement the queued STATUS.md item without changing unrelated project behavior.
 
 ## Scope
 
 - Read AGENTS.md and AIOS_START.md before implementation.
+- Read docs/acceptance/$id.md before implementation.
 - Follow the PLAN -> APPROVED -> IMPLEMENT -> VALIDATE -> PULL_REQUEST -> HUMAN_MERGE workflow.
 - Do not edit protected files without explicit approval.
 "@
+        Write-NewFile $bugPath $bugContent
+    }
 
-    $acceptanceContent = @"
+    if (-not (Test-Path -LiteralPath $acceptancePath)) {
+        $acceptanceContent = @"
 # Acceptance: $id
 
 The queued item is accepted when:
@@ -210,13 +261,21 @@ The queued item is accepted when:
 - The working tree contains only intentional changes.
 - A pull request is opened and not merged automatically.
 "@
+        Write-NewFile $acceptancePath $acceptanceContent
+    }
 
     $inboxContent = @"
-# AIOS Inbox: $id
+# AIOS Inbox Prompt: $id
 
 Queued from STATUS.md line $($next.LineNumber):
 
 > $($next.Text)
+
+Read before implementation:
+
+- docs/bugs/$id.md
+- docs/acceptance/$id.md
+- .aios/queue/$id.json
 
 Next command:
 
@@ -235,15 +294,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-v10.ps1 current
             text = $next.Text
         }
         files = [ordered]@{
-            bug = ".aios/bugs/$id.md"
-            acceptance = ".aios/acceptance/$id.md"
+            bug = "docs/bugs/$id.md"
+            acceptance = "docs/acceptance/$id.md"
             queue = ".aios/queue/$id.json"
-            inbox = ".aios/inbox/$id.md"
+            inbox = ".aios/inbox/$id-PROMPT.md"
         }
     }
 
-    Write-NewFile $bugPath $bugContent
-    Write-NewFile $acceptancePath $acceptanceContent
     Write-NewFile $inboxPath $inboxContent
     Save-QueueItem $queuePath $queueItem
 
@@ -279,6 +336,7 @@ function Invoke-Current {
         Write-Host "Item: $($item.source.text)"
         Write-Host "Bug: $($item.files.bug)"
         Write-Host "Acceptance: $($item.files.acceptance)"
+        Write-Host "Inbox: $($item.files.inbox)"
     }
 }
 
@@ -287,8 +345,8 @@ function Complete-Current {
     $item = $entry.Item
     $item.status = "completed"
     $item | Add-Member -NotePropertyName completedAt -NotePropertyValue (Get-Date).ToString("o") -Force
-    Save-QueueItem $entry.File $item
-    Update-StatusLine $item.source.line "x"
+    Update-ExistingQueueItem $entry.File $item
+    Update-StatusLine $item.source.line "completed"
     Write-Host "Completed $($item.id)"
 }
 
@@ -297,8 +355,8 @@ function Skip-Current {
     $item = $entry.Item
     $item.status = "skipped"
     $item | Add-Member -NotePropertyName skippedAt -NotePropertyValue (Get-Date).ToString("o") -Force
-    Save-QueueItem $entry.File $item
-    Update-StatusLine $item.source.line "-"
+    Update-ExistingQueueItem $entry.File $item
+    Update-StatusLine $item.source.line "skipped"
     Write-Host "Skipped $($item.id)"
 }
 
