@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
@@ -22,7 +22,7 @@ if (-not (Test-Path -LiteralPath $TargetProject)) {
     throw "TargetProject not found: $TargetProject"
 }
 
-& (Join-Path $AIOSRoot "doctor.ps1") -Root $AIOSRoot
+& (Join-Path $AIOSRoot "doctor.ps1") -Root $AIOSRoot -RequireSourceFiles
 if ($LASTEXITCODE -ne 0) {
     throw "AIOS source failed doctor; deployment aborted."
 }
@@ -32,15 +32,33 @@ $backupRoot = Join-Path $TargetProject ".aios-backups"
 $backup = Join-Path $backupRoot $stamp
 New-Item -ItemType Directory -Path $backup -Force | Out-Null
 
-$projectItems = @("AGENTS.md", ".aios", "scripts", "templates", "docs")
-foreach ($item in $projectItems) {
+$runtimeFiles = @(
+    "AGENTS.md",
+    "AIOS_START.md",
+    "doctor.ps1",
+    ".aios\version.json",
+    ".aios\runtime\runtime.json",
+    ".aios\workflows\semi-auto-fix.yaml",
+    ".aios\policies\semi-auto-fix.yaml",
+    ".aios\prompts\AUTO_FIX.md",
+    ".aios\prompts\AUTO_FIX_APPROVED.md",
+    "scripts\aios-v10.ps1",
+    "docs\auto-queue.md"
+)
+
+foreach ($item in $runtimeFiles) {
     $existing = Join-Path $TargetProject $item
     if (Test-Path -LiteralPath $existing) {
-        Copy-Item -LiteralPath $existing -Destination (Join-Path $backup $item) -Recurse -Force
+        $backupPath = Join-Path $backup $item
+        $backupParent = Split-Path -Parent $backupPath
+        if (-not (Test-Path -LiteralPath $backupParent)) {
+            New-Item -ItemType Directory -Path $backupParent -Force | Out-Null
+        }
+        Copy-Item -LiteralPath $existing -Destination $backupPath -Force
     }
 }
 
-foreach ($item in $projectItems) {
+foreach ($item in $runtimeFiles) {
     $src = Join-Path $AIOSRoot $item
     $dst = Join-Path $TargetProject $item
 
@@ -48,13 +66,11 @@ foreach ($item in $projectItems) {
         throw "Deployment source missing: $src"
     }
 
-    if ((Get-Item -LiteralPath $src).PSIsContainer) {
-        New-Item -ItemType Directory -Path $dst -Force | Out-Null
-        Copy-Item -Path (Join-Path $src "*") -Destination $dst -Recurse -Force
+    $dstParent = Split-Path -Parent $dst
+    if (-not (Test-Path -LiteralPath $dstParent)) {
+        New-Item -ItemType Directory -Path $dstParent -Force | Out-Null
     }
-    else {
-        Copy-Item -LiteralPath $src -Destination $dst -Force
-    }
+    Copy-Item -LiteralPath $src -Destination $dst -Force
 }
 
 & (Join-Path $TargetProject "scripts\aios-v10.ps1") doctor -Root $TargetProject
@@ -64,4 +80,4 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "Deployed AIOS v10.0.2 to $TargetProject"
 Write-Host "Backup: $backup"
-Write-Host "Next: run scripts\aios-v10.ps1 plan"
+Write-Host "Next: run scripts\aios-v10.ps1 queue-status"
