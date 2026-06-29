@@ -1,10 +1,23 @@
 [CmdletBinding()]
 param(
-    [string]$AIOSRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+    [string]$AIOSRoot
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if ([string]::IsNullOrWhiteSpace($AIOSRoot)) {
+    $scriptDirectory = Split-Path -Parent $PSCommandPath
+
+    if ([string]::IsNullOrWhiteSpace($scriptDirectory)) {
+        throw "Unable to determine the test script directory."
+    }
+
+    $AIOSRoot = (Resolve-Path (Join-Path $scriptDirectory "..")).Path
+}
+else {
+    $AIOSRoot = (Resolve-Path $AIOSRoot).Path
+}
 
 $ScriptPath = Join-Path $AIOSRoot "scripts\aios-v10.ps1"
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)

@@ -1,12 +1,23 @@
 [CmdletBinding()]
 param(
-    [string]$Root = $PSScriptRoot,
+    [string]$Root,
     [switch]$RequireSourceFiles
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-$Root = [System.IO.Path]::GetFullPath($Root)
+
+if ([string]::IsNullOrWhiteSpace($Root)) {
+    $scriptDirectory = Split-Path -Parent $PSCommandPath
+
+    if ([string]::IsNullOrWhiteSpace($scriptDirectory)) {
+        throw "Unable to determine the doctor script directory."
+    }
+
+    $Root = $scriptDirectory
+}
+
+$Root = (Resolve-Path $Root).Path
 $Missing = @()
 
 $Required = @(
