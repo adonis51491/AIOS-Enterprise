@@ -19,7 +19,8 @@ $Required = @(
     "scripts\aios-v10.ps1",
     "AGENTS.md",
     "AIOS_START.md",
-    "docs\auto-queue.md"
+    "docs\auto-queue.md",
+    "docs\auto-run.md"
 )
 
 if ($RequireSourceFiles) {

@@ -17,3 +17,13 @@ PLAN -> APPROVED -> IMPLEMENT -> VALIDATE -> PULL_REQUEST -> HUMAN_MERGE
 Auto queue only accepts `CONTEST-\d+` or `BUG-\d+` items from `STATUS.md`. If no eligible item exists, `enqueue-next` prints `NO_ELIGIBLE_STATUS_ITEM` and creates no files.
 
 Implementation requires explicit human approval. Do not edit `main`, `.env`, package manifests, lock files, production credentials, or production databases without approval.
+Full-auto repair commands:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-v10.ps1 auto-run
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-v10.ps1 auto-status
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-v10.ps1 auto-resume
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-v10.ps1 auto-stop
+```
+
+Full-auto repair writes `.aios/runtime/auto-run-state.json`, creates `fix/<TASK-ID>-auto`, opens a draft PR, waits for checks, marks the PR ready for review after success, and stops before human merge.
