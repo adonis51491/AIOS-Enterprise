@@ -1,6 +1,7 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
-    [string]$Root = $PSScriptRoot
+    [string]$Root = $PSScriptRoot,
+    [switch]$RequireSourceFiles
 )
 
 Set-StrictMode -Version Latest
@@ -15,12 +16,19 @@ $Required = @(
     ".aios\policies\semi-auto-fix.yaml",
     ".aios\prompts\AUTO_FIX.md",
     ".aios\prompts\AUTO_FIX_APPROVED.md",
-    "templates\prompts\AUTO_FIX.md",
-    "templates\prompts\AUTO_FIX_APPROVED.md",
     "scripts\aios-v10.ps1",
     "AGENTS.md",
-    "deploy.ps1"
+    "AIOS_START.md",
+    "docs\auto-queue.md"
 )
+
+if ($RequireSourceFiles) {
+    $Required += @(
+        "templates\prompts\AUTO_FIX.md",
+        "templates\prompts\AUTO_FIX_APPROVED.md",
+        "deploy.ps1"
+    )
+}
 
 foreach ($relative in $Required) {
     $full = Join-Path -Path $Root -ChildPath $relative

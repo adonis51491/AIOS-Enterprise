@@ -10,3 +10,11 @@ Before project work:
 6. Never edit `main`, `.env`, package manifests, lock files, production credentials, or production databases without approval.
 7. Validate before commit.
 8. Open a PR; never merge automatically.
+
+Auto queue:
+
+1. Use `scripts/aios-v10.ps1 queue-status` and `scripts/aios-v10.ps1 current` to inspect queued work.
+2. Use `scripts/aios-v10.ps1 enqueue-next` only when no queued or active task exists.
+3. Read the generated queue, bug, inbox, and acceptance files before implementation.
+4. Use `complete-current` only after validation passes.
+5. Use `skip-current` only when the queued item is intentionally deferred.
