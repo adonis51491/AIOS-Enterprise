@@ -224,12 +224,82 @@ function Save-AutoRunState($State) {
     [System.IO.File]::WriteAllText($path, ($json + [Environment]::NewLine), $utf8NoBom)
 }
 
+function Get-SafePropertyValue($Object, [string]$PropertyName) {
+    if ($null -eq $Object) { return $null }
+    if ([string]::IsNullOrWhiteSpace($PropertyName)) { return $null }
+    $psObject = $Object.PSObject
+    if ($null -eq $psObject) { return $null }
+    $property = $psObject.Properties[$PropertyName]
+    if ($null -eq $property) { return $null }
+    return $property.Value
+}
+
+function Get-AutoRunStateTaskId($State) {
+    if ($null -eq $State) { return $null }
+
+    $task = Get-SafePropertyValue $State "task"
+    if ($null -ne $task) {
+        $canonicalId = Get-SafePropertyValue $task "id"
+        if (-not [string]::IsNullOrWhiteSpace($canonicalId)) {
+            return [string]$canonicalId
+        }
+    }
+
+    $legacyId = Get-SafePropertyValue $State "taskId"
+    if (-not [string]::IsNullOrWhiteSpace($legacyId)) {
+        return [string]$legacyId
+    }
+
+    return $null
+}
+
+function Normalize-AutoRunState($State) {
+    if ($null -eq $State) { return $null }
+    $taskId = Get-AutoRunStateTaskId $State
+    if ([string]::IsNullOrWhiteSpace($taskId)) { return $State }
+
+    $task = Get-SafePropertyValue $State "task"
+    if ($null -eq $task) {
+        $task = [pscustomobject]@{}
+        $State | Add-Member -NotePropertyName task -NotePropertyValue $task -Force
+    }
+
+    $id = Get-SafePropertyValue $task "id"
+    if ([string]::IsNullOrWhiteSpace($id)) {
+        $task | Add-Member -NotePropertyName id -NotePropertyValue $taskId -Force
+    }
+
+    return $State
+}
+
+function Assert-AutoRunStateContract($State) {
+    if ($null -eq $State) { throw "AUTO_RUN_STATE_EMPTY" }
+
+    $phase = Get-SafePropertyValue $State "phase"
+    if ([string]::IsNullOrWhiteSpace($phase)) {
+        throw "AUTO_RUN_STATE_PHASE_EMPTY"
+    }
+
+    $task = Get-SafePropertyValue $State "task"
+    if ($phase -eq "STOPPED" -and $null -eq $task) {
+        return
+    }
+
+    $taskId = Get-AutoRunStateTaskId $State
+    if ([string]::IsNullOrWhiteSpace($taskId)) {
+        throw "AUTO_RUN_STATE_TASK_ID_EMPTY"
+    }
+}
+
 function Read-AutoRunState {
     $path = Get-AutoRunStatePath
     if (-not (Test-Path -LiteralPath $path)) {
         return $null
     }
-    return Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
+    $state = Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
+    $state = Normalize-AutoRunState $state
+    Assert-AutoRunStateContract $state
+    return $state
 }
 
 function Add-AutoRunEvent($State, [string]$Phase, [string]$Message) {
@@ -319,7 +389,7 @@ function Assert-NoActiveAutoRun {
     $state = Read-AutoRunState
     if ($null -eq $state) { return }
     if ($state.phase -notin @("STOPPED", "FAILED", "READY_FOR_REVIEW")) {
-        throw "An auto-run is already active: $($state.task.id) [$($state.phase)]"
+        throw "An auto-run is already active: $(Get-AutoRunStateTaskId $state) [$($state.phase)]"
     }
 }
 
