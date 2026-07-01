@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aios.local/schema/v11/task.schema.json",
+  "title": "AIOS v11 Task",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "title",
+    "state",
+    "plan",
+    "approval",
+    "evidence",
+    "dependencies",
+    "createdAt",
+    "updatedAt",
+    "events"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "11.0.0" },
+    "id": { "type": "string", "pattern": "^[A-Z][A-Z0-9_-]{2,63}$" },
+    "title": { "type": "string", "minLength": 1 },
+    "state": {
+      "enum": [
+        "QUEUED",
+        "PLANNING",
+        "WAITING_APPROVAL",
+        "IMPLEMENTING",
+        "VALIDATING",
+        "PR_READY",
+        "WAITING_MERGE",
+        "COMPLETED",
+        "BLOCKED",
+        "FAILED",
+        "CANCELLED",
+        "SKIPPED"
+      ]
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "recordedAt"],
+      "properties": {
+        "path": { "type": ["string", "null"] },
+        "sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+        "recordedAt": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approved", "planSha256", "approvedAt"],
+      "properties": {
+        "approved": { "type": "boolean" },
+        "planSha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+        "approvedAt": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "check", "command", "exitCode", "result", "commitSha", "branch", "recordedAt"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+          "check": { "type": "string", "minLength": 1 },
+          "command": { "type": "string", "minLength": 1 },
+          "exitCode": { "type": "integer" },
+          "result": { "enum": ["PASS", "FAIL"] },
+          "commitSha": { "type": "string", "minLength": 7 },
+          "branch": { "type": "string", "minLength": 1 },
+          "notes": { "type": ["string", "null"] },
+          "recordedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "dependencies": { "type": "array", "items": { "type": "string" } },
+    "blockingReason": { "type": ["string", "null"] },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["at", "type", "message"],
+        "properties": {
+          "at": { "type": "string", "format": "date-time" },
+          "type": { "type": "string", "minLength": 1 },
+          "message": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}
