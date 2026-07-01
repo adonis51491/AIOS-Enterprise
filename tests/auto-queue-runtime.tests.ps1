@@ -29,6 +29,7 @@ $ZhHome = -join ([char[]]@(0x9996,0x9801))
 $ZhStory = -join ([char[]]@(0x6545,0x4E8B))
 $ZhTask = -join ([char[]]@(0x4E2D,0x6587,0x4EFB,0x52D9))
 $ZhNoId = -join ([char[]]@(0x6C92,0x6709,0x6B63,0x5F0F,0x0049,0x0044))
+$ZhDuplicateAppointment = -join ([char[]]@(0x9632,0x6B62,0x540C,0x6642,0x6BB5,0x91CD,0x8907,0x9810,0x7D04))
 
 function New-TestProject([string]$Name, [string[]]$StatusLines) {
     $path = Join-Path $env:TEMP ("aios-auto-queue-$Name-" + [guid]::NewGuid().ToString("N"))
@@ -69,6 +70,10 @@ function Assert-FileMissing([string]$Path) {
 
 function Read-JsonFile([string]$Path) {
     return Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+}
+
+function Get-FileSha256([string]$Path) {
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
 }
 
 $tests = @()
@@ -182,7 +187,7 @@ $tests += [pscustomobject]@{
 }
 
 $tests += [pscustomobject]@{
-    Name = "Existing bug and acceptance docs are not overwritten"
+    Name = "Selected task existing target refuses overwrite and leaves no partial artifacts"
     Run = {
         $project = New-TestProject "existing-docs" @(
             "# STATUS",
@@ -192,16 +197,160 @@ $tests += [pscustomobject]@{
             "1. CONTEST-003$ZhColon preserve existing docs"
         )
         New-Item -ItemType Directory -Path (Join-Path $project "docs\bugs") -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $project "docs\acceptance") -Force | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $project "docs\bugs\CONTEST-003.md"), "BUG SENTINEL", $Utf8NoBom)
-        [System.IO.File]::WriteAllText((Join-Path $project "docs\acceptance\CONTEST-003.md"), "ACCEPTANCE SENTINEL", $Utf8NoBom)
+        $result = Invoke-AIOS $project "enqueue-next"
+        Assert-True ($result.ExitCode -ne 0) "Existing selected target unexpectedly succeeded"
+        Assert-True ($result.Output -match "Refusing to overwrite existing file") $result.Output
+        Assert-True ((Get-Content -LiteralPath (Join-Path $project "docs\bugs\CONTEST-003.md") -Raw) -eq "BUG SENTINEL") "Bug doc was overwritten"
+        Assert-FileMissing (Join-Path $project "docs\acceptance\CONTEST-003.md")
+        Assert-FileMissing (Join-Path $project ".aios\queue\CONTEST-003.json")
+        Assert-FileMissing (Join-Path $project ".aios\inbox\CONTEST-003-PROMPT.md")
+    }
+}
+
+$tests += [pscustomobject]@{
+    Name = "Blocked task artifacts exist and next eligible BUG-001 enqueues"
+    Run = {
+        $project = New-TestProject "blocked-artifacts" @(
+            "# STATUS",
+            "",
+            "## Current Sprint",
+            "",
+            "* [x] CONTEST-001$ZhColon completed",
+            "* [x] CONTEST-002$ZhColon completed",
+            "* [x] CONTEST-003$ZhColon completed",
+            "* [x] CONTEST-004$ZhColon completed",
+            "* [-] CONTEST-005$ZhColon AI blocked",
+            "* [-] CONTEST-006$ZhColon dependency_blocked: depends on CONTEST-005",
+            "* [x] BUG-002$ZhColon completed",
+            "* [ ] BUG-001$ZhColon $ZhDuplicateAppointment"
+        )
+        New-Item -ItemType Directory -Path (Join-Path $project ".aios\queue") -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $project ".aios\inbox") -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $project "docs\bugs") -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $project "docs\acceptance") -Force | Out-Null
+        [System.IO.File]::WriteAllText((Join-Path $project ".aios\queue\CONTEST-005.json"), "{`"id`":`"CONTEST-005`",`"status`":`"blocked`"}", $Utf8NoBom)
+        [System.IO.File]::WriteAllText((Join-Path $project ".aios\inbox\CONTEST-005-PROMPT.md"), "PROMPT SENTINEL", $Utf8NoBom)
+        [System.IO.File]::WriteAllText((Join-Path $project "docs\bugs\CONTEST-005.md"), "BUG SENTINEL", $Utf8NoBom)
+        [System.IO.File]::WriteAllText((Join-Path $project "docs\acceptance\CONTEST-005.md"), "ACCEPTANCE SENTINEL", $Utf8NoBom)
+        $hashesBefore = @{
+            Queue = Get-FileSha256 (Join-Path $project ".aios\queue\CONTEST-005.json")
+            Inbox = Get-FileSha256 (Join-Path $project ".aios\inbox\CONTEST-005-PROMPT.md")
+            Bug = Get-FileSha256 (Join-Path $project "docs\bugs\CONTEST-005.md")
+            Acceptance = Get-FileSha256 (Join-Path $project "docs\acceptance\CONTEST-005.md")
+        }
+
         $result = Invoke-AIOS $project "enqueue-next"
         Assert-True ($result.ExitCode -eq 0) $result.Output
-        Assert-True ((Get-Content -LiteralPath (Join-Path $project "docs\bugs\CONTEST-003.md") -Raw) -eq "BUG SENTINEL") "Bug doc was overwritten"
-        Assert-True ((Get-Content -LiteralPath (Join-Path $project "docs\acceptance\CONTEST-003.md") -Raw) -eq "ACCEPTANCE SENTINEL") "Acceptance doc was overwritten"
-        $queue = Read-JsonFile (Join-Path $project ".aios\queue\CONTEST-003.json")
-        Assert-True ($queue.files.bug -eq "docs/bugs/CONTEST-003.md") "Queue did not reference existing bug doc"
-        Assert-True ($queue.files.acceptance -eq "docs/acceptance/CONTEST-003.md") "Queue did not reference existing acceptance doc"
+        Assert-True ($result.Output -match "Queued BUG-001") $result.Output
+
+        $queue = Read-JsonFile (Join-Path $project ".aios\queue\BUG-001.json")
+        Assert-True ($queue.id -eq "BUG-001") "Expected queue id BUG-001, got $($queue.id)"
+        Assert-True ($queue.files.bug -eq "docs/bugs/BUG-001.md") "Wrong selected bug path"
+        Assert-True ($queue.files.acceptance -eq "docs/acceptance/BUG-001.md") "Wrong selected acceptance path"
+        Assert-True ($queue.files.queue -eq ".aios/queue/BUG-001.json") "Wrong selected queue path"
+        Assert-True ($queue.files.inbox -eq ".aios/inbox/BUG-001-PROMPT.md") "Wrong selected inbox path"
+        Assert-True ((Get-Content -LiteralPath (Join-Path $project "docs\bugs\BUG-001.md") -Raw) -match "# BUG-001") "Bug doc did not use BUG-001"
+        Assert-True ((Get-Content -LiteralPath (Join-Path $project "docs\acceptance\BUG-001.md") -Raw) -match "# Acceptance: BUG-001") "Acceptance doc did not use BUG-001"
+        Assert-True ((Get-Content -LiteralPath (Join-Path $project ".aios\inbox\BUG-001-PROMPT.md") -Raw) -match "BUG-001") "Inbox did not use BUG-001"
+
+        Assert-True ((Get-FileSha256 (Join-Path $project ".aios\queue\CONTEST-005.json")) -eq $hashesBefore.Queue) "CONTEST-005 queue was modified"
+        Assert-True ((Get-FileSha256 (Join-Path $project ".aios\inbox\CONTEST-005-PROMPT.md")) -eq $hashesBefore.Inbox) "CONTEST-005 inbox was modified"
+        Assert-True ((Get-FileSha256 (Join-Path $project "docs\bugs\CONTEST-005.md")) -eq $hashesBefore.Bug) "CONTEST-005 bug doc was modified"
+        Assert-True ((Get-FileSha256 (Join-Path $project "docs\acceptance\CONTEST-005.md")) -eq $hashesBefore.Acceptance) "CONTEST-005 acceptance doc was modified"
+    }
+}
+
+$tests += [pscustomobject]@{
+    Name = "Completed blocked and dependency-blocked tasks are skipped"
+    Run = {
+        $project = New-TestProject "skip-ineligible" @(
+            "# STATUS",
+            "",
+            "## Current Sprint",
+            "",
+            "* [x] CONTEST-001$ZhColon completed",
+            "* [-] CONTEST-002$ZhColon blocked",
+            "* [ ] CONTEST-003$ZhColon dependency_blocked: depends on CONTEST-002",
+            "* [ ] BUG-001$ZhColon first eligible"
+        )
+        $result = Invoke-AIOS $project "enqueue-next"
+        Assert-True ($result.ExitCode -eq 0) $result.Output
+        Assert-True ($result.Output -match "Queued BUG-001") $result.Output
+        Assert-FileMissing (Join-Path $project ".aios\queue\CONTEST-001.json")
+        Assert-FileMissing (Join-Path $project ".aios\queue\CONTEST-002.json")
+        Assert-FileMissing (Join-Path $project ".aios\queue\CONTEST-003.json")
+    }
+}
+
+$tests += [pscustomobject]@{
+    Name = "Partial artifact write failure removes selected task artifacts"
+    Run = {
+        $project = New-TestProject "partial-failure" @(
+            "# STATUS",
+            "",
+            "## Current Sprint",
+            "",
+            "* [ ] BUG-001$ZhColon partial failure cleanup"
+        )
+        $oldValue = $env:AIOS_TEST_FAIL_AFTER_ARTIFACT_COUNT
+        try {
+            $env:AIOS_TEST_FAIL_AFTER_ARTIFACT_COUNT = "2"
+            $result = Invoke-AIOS $project "enqueue-next"
+        }
+        finally {
+            if ($null -eq $oldValue) {
+                Remove-Item Env:\AIOS_TEST_FAIL_AFTER_ARTIFACT_COUNT -ErrorAction SilentlyContinue
+            }
+            else {
+                $env:AIOS_TEST_FAIL_AFTER_ARTIFACT_COUNT = $oldValue
+            }
+        }
+        Assert-True ($result.ExitCode -ne 0) "Simulated failure unexpectedly succeeded"
+        Assert-True ($result.Output -match "AIOS_TEST_SIMULATED_ARTIFACT_FAILURE") $result.Output
+        Assert-FileMissing (Join-Path $project "docs\bugs\BUG-001.md")
+        Assert-FileMissing (Join-Path $project "docs\acceptance\BUG-001.md")
+        Assert-FileMissing (Join-Path $project ".aios\inbox\BUG-001-PROMPT.md")
+        Assert-FileMissing (Join-Path $project ".aios\queue\BUG-001.json")
+    }
+}
+
+$tests += [pscustomobject]@{
+    Name = "Queued or active task blocks creating another task"
+    Run = {
+        $project = New-TestProject "active-blocks" @(
+            "# STATUS",
+            "",
+            "## Current Sprint",
+            "",
+            "* [ ] BUG-001$ZhColon should not enqueue"
+        )
+        New-Item -ItemType Directory -Path (Join-Path $project ".aios\queue") -Force | Out-Null
+        [System.IO.File]::WriteAllText((Join-Path $project ".aios\queue\CONTEST-099.json"), "{`"id`":`"CONTEST-099`",`"status`":`"active`"}", $Utf8NoBom)
+        $result = Invoke-AIOS $project "enqueue-next"
+        Assert-True ($result.ExitCode -ne 0) "enqueue-next unexpectedly allowed a second current task"
+        Assert-True ($result.Output -match "already exists: CONTEST-099 \[active\]") $result.Output
+        Assert-FileMissing (Join-Path $project ".aios\queue\BUG-001.json")
+    }
+}
+
+$tests += [pscustomobject]@{
+    Name = "Chinese BUG-001 title preserves formal selected ID"
+    Run = {
+        $project = New-TestProject "bug001-zh" @(
+            "# STATUS",
+            "",
+            "## Current Sprint",
+            "",
+            "* [-] CONTEST-005$ZhColon blocked",
+            "* [ ] BUG-001$ZhColon $ZhDuplicateAppointment"
+        )
+        $result = Invoke-AIOS $project "enqueue-next"
+        Assert-True ($result.ExitCode -eq 0) $result.Output
+        Assert-True ($result.Output -match "Queued BUG-001") $result.Output
+        $queue = Read-JsonFile (Join-Path $project ".aios\queue\BUG-001.json")
+        Assert-True ($queue.id -eq "BUG-001") "Chinese title did not preserve BUG-001 id"
+        Assert-True ($queue.source.text -match [regex]::Escape($ZhDuplicateAppointment)) "Chinese title was not preserved"
     }
 }
 
