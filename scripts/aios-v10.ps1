@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("help", "doctor", "plan", "approved", "enqueue-next", "queue-status", "current", "complete-current", "skip-current", "auto-run", "auto-status", "auto-resume", "auto-stop")]
+    [ValidateSet("help", "doctor", "plan", "approved", "enqueue-next", "queue-status", "current", "complete-current", "skip-current", "auto-run", "auto-status", "auto-resume", "auto-stop", "finalize-completed-state")]
     [string]$Command = "help",
 
     [string]$Root = (Get-Location).Path,
@@ -267,9 +267,11 @@ function Get-AutoRunStatePath {
 
 function New-AutoRunState([string]$Phase) {
     return [ordered]@{
+        schemaVersion = "10.0.2"
         version = "10.0.2"
         mode = "full-auto-repair"
         phase = $Phase
+        active = $true
         dryRun = [bool]$DryRun
         task = $null
         branch = $null
@@ -293,10 +295,31 @@ function Save-AutoRunState($State) {
     if (-not (Test-Path -LiteralPath $parent)) {
         New-Item -ItemType Directory -Path $parent -Force | Out-Null
     }
-    $State.updatedAt = (Get-Date).ToString("o")
+    $State | Add-Member -NotePropertyName updatedAt -NotePropertyValue (Get-Date).ToString("o") -Force
     $json = $State | ConvertTo-Json -Depth 12
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-    [System.IO.File]::WriteAllText($path, ($json + [Environment]::NewLine), $utf8NoBom)
+    $tempPath = Join-Path $parent ("auto-run-state." + [guid]::NewGuid().ToString("N") + ".tmp")
+    try {
+        [System.IO.File]::WriteAllText($tempPath, ($json + [Environment]::NewLine), $utf8NoBom)
+        if ($env:AIOS_TEST_FAIL_STATE_WRITE -eq "1") {
+            throw "AIOS_TEST_SIMULATED_STATE_WRITE_FAILURE"
+        }
+        if (Test-Path -LiteralPath $path) {
+            $backupPath = $tempPath + ".bak"
+            [System.IO.File]::Replace($tempPath, $path, $backupPath)
+            if (Test-Path -LiteralPath $backupPath) {
+                Remove-Item -LiteralPath $backupPath -Force
+            }
+        }
+        else {
+            Move-Item -LiteralPath $tempPath -Destination $path
+        }
+    }
+    finally {
+        if (Test-Path -LiteralPath $tempPath) {
+            Remove-Item -LiteralPath $tempPath -Force
+        }
+    }
 }
 
 function Get-SafePropertyValue($Object, [string]$PropertyName) {
@@ -364,6 +387,110 @@ function Assert-AutoRunStateContract($State) {
     if ([string]::IsNullOrWhiteSpace($taskId)) {
         throw "AUTO_RUN_STATE_TASK_ID_EMPTY"
     }
+}
+
+function Get-AutoRunTerminalPhases {
+    return @("COMPLETED", "FAILED", "STOPPED", "BLOCKED")
+}
+
+function Get-AutoRunActivePhases {
+    return @("STARTED", "QUEUED", "BRANCH_READY", "PLAN", "IMPLEMENT", "VALIDATE_BUILD", "VALIDATE_DIFF", "COMMITTED", "PUSHED", "PULL_REQUEST", "WAITING_CHECKS", "READY_FOR_REVIEW")
+}
+
+function Test-AutoRunStateIsTerminal($State) {
+    if ($null -eq $State) { return $false }
+    $phase = [string](Get-SafePropertyValue $State "phase")
+    if ([string]::IsNullOrWhiteSpace($phase)) { return $false }
+    return (Get-AutoRunTerminalPhases) -contains $phase
+}
+
+function Test-AutoRunStateIsActive($State) {
+    if ($null -eq $State) { return $false }
+    $phase = [string](Get-SafePropertyValue $State "phase")
+    if ([string]::IsNullOrWhiteSpace($phase)) { throw "AUTO_RUN_STATE_PHASE_EMPTY" }
+    if (Test-AutoRunStateIsTerminal $State) { return $false }
+    if ((Get-AutoRunActivePhases) -contains $phase) { return $true }
+    throw "AUTO_RUN_STATE_UNKNOWN_PHASE: $phase"
+}
+
+function Get-QueueEntryById([string]$TaskId) {
+    foreach ($file in (Get-QueueFiles)) {
+        $item = Read-QueueFile $file
+        if ($item.id -eq $TaskId) {
+            return [pscustomobject]@{ File = $file.FullName; Item = $item }
+        }
+    }
+    return $null
+}
+
+function Assert-AutoRunStateMatchesTaskForCompletion($State, [string]$TaskId) {
+    if ($null -eq $State) { return }
+    $stateTaskId = Get-AutoRunStateTaskId $State
+    if ($stateTaskId -ne $TaskId) {
+        throw "AUTO_RUN_STATE_TASK_MISMATCH: $stateTaskId; expected $TaskId"
+    }
+}
+
+function Assert-AutoRunStateHasNoUnfinishedSensitiveEvents($State) {
+    if ($null -eq $State -or $null -eq $State.events) { return }
+    foreach ($event in @($State.events)) {
+        $phase = Get-SafePropertyValue $event "phase"
+        if ([string]::IsNullOrWhiteSpace($phase)) { $phase = Get-SafePropertyValue $event "type" }
+        if ($phase -in @("COMMITTED", "PUSHED", "PULL_REQUEST", "WAITING_CHECKS")) {
+            throw "AUTO_RUN_STATE_HAS_UNFINISHED_SENSITIVE_EVENT: $phase"
+        }
+    }
+}
+
+function Complete-AutoRunState($State, [string]$TaskId, [string]$StopReason) {
+    if ($null -eq $State) { return $null }
+    Assert-AutoRunStateMatchesTaskForCompletion $State $TaskId
+
+    if (Test-AutoRunStateIsTerminal $State) {
+        if ($State.phase -eq "COMPLETED") {
+            return $State
+        }
+        throw "AUTO_RUN_STATE_ALREADY_TERMINAL: $($State.phase)"
+    }
+
+    $completedAt = (Get-Date).ToUniversalTime().ToString("o")
+    $State.phase = "COMPLETED"
+    $State | Add-Member -NotePropertyName active -NotePropertyValue $false -Force
+    $State | Add-Member -NotePropertyName dryRun -NotePropertyValue $false -Force
+    $State | Add-Member -NotePropertyName completedAt -NotePropertyValue $completedAt -Force
+    $State | Add-Member -NotePropertyName stopReason -NotePropertyValue $StopReason -Force
+    if ($null -ne $State.task) {
+        $State.task | Add-Member -NotePropertyName status -NotePropertyValue "completed" -Force
+    }
+
+    $alreadyCompleted = $false
+    if ($null -ne $State.events) {
+        foreach ($event in @($State.events)) {
+            $phase = Get-SafePropertyValue $event "phase"
+            if ([string]::IsNullOrWhiteSpace($phase)) { $phase = Get-SafePropertyValue $event "type" }
+            if ($phase -eq "COMPLETED") { $alreadyCompleted = $true }
+        }
+    }
+    if (-not $alreadyCompleted) {
+        $event = [ordered]@{
+            at = $completedAt
+            phase = "COMPLETED"
+            type = "COMPLETED"
+            message = "Task $TaskId completed; auto-run state finalized."
+        }
+        $events = @()
+        if ($null -ne $State.events) { $events += @($State.events) }
+        $events += [pscustomobject]$event
+        $State.events = $events
+    }
+
+    Save-AutoRunState $State
+    $saved = Read-AutoRunState
+    if (-not (Test-AutoRunStateIsTerminal $saved)) {
+        throw "AUTO_RUN_STATE_COMPLETION_VERIFY_FAILED"
+    }
+    Assert-AutoRunStateMatchesTaskForCompletion $saved $TaskId
+    return $saved
 }
 
 function Read-AutoRunState {
@@ -463,9 +590,11 @@ function Assert-AutoRunSafety([string]$Branch) {
 function Assert-NoActiveAutoRun {
     $state = Read-AutoRunState
     if ($null -eq $state) { return }
-    if ($state.phase -notin @("STOPPED", "FAILED", "READY_FOR_REVIEW")) {
+    if (Test-AutoRunStateIsTerminal $state) { return }
+    if (Test-AutoRunStateIsActive $state) {
         throw "An auto-run is already active: $(Get-AutoRunStateTaskId $state) [$($state.phase)]"
     }
+    throw "AUTO_RUN_STATE_UNKNOWN_PHASE: $($state.phase)"
 }
 
 function Get-AutoRunTask {
@@ -496,10 +625,14 @@ function Stop-AutoRun {
     $state = Read-AutoRunState
     if ($null -eq $state) {
         $state = New-AutoRunState "STOPPED"
+        $state | Add-Member -NotePropertyName active -NotePropertyValue $false -Force
+        $state | Add-Member -NotePropertyName stopReason -NotePropertyValue "AUTO_RUN_STOPPED" -Force
         Add-AutoRunEvent $state "STOPPED" "No active auto-run existed."
     }
     else {
+        $state | Add-Member -NotePropertyName active -NotePropertyValue $false -Force
         $state | Add-Member -NotePropertyName stoppedAt -NotePropertyValue (Get-Date).ToString("o") -Force
+        $state | Add-Member -NotePropertyName stopReason -NotePropertyValue "AUTO_RUN_STOPPED" -Force
         Add-AutoRunEvent $state "STOPPED" "Auto-run stopped by command."
     }
     Write-Host "AIOS auto-run stopped."
@@ -556,7 +689,7 @@ function Start-AutoRun {
 function Resume-AutoRun {
     $state = Read-AutoRunState
     if ($null -eq $state) { throw "AUTO_RUN_STATE_NOT_FOUND" }
-    if ($state.phase -eq "STOPPED") { throw "AUTO_RUN_STOPPED" }
+    if (Test-AutoRunStateIsTerminal $state) { throw "AUTO_RUN_TERMINAL_STATE: $($state.phase)" }
     if ($state.phase -eq "READY_FOR_REVIEW") { Write-Host "AIOS auto-run already ready for review."; return }
 
     $branch = Get-GitBranchName
@@ -785,11 +918,55 @@ function Invoke-Current {
 function Complete-Current {
     $entry = Get-SingleCurrentQueueItem
     $item = $entry.Item
+    $state = Read-AutoRunState
+    Assert-AutoRunStateMatchesTaskForCompletion $state $item.id
+
     $item.status = "completed"
     $item | Add-Member -NotePropertyName completedAt -NotePropertyValue (Get-Date).ToString("o") -Force
     Update-ExistingQueueItem $entry.File $item
     Update-StatusLine $item.source.line "completed"
+
+    try {
+        Complete-AutoRunState $state $item.id "TASK_COMPLETED" | Out-Null
+    }
+    catch {
+        throw "AUTO_RUN_STATE_COMPLETION_PARTIAL_FAILURE: queue $($item.id) completed but state finalization failed. $($_.Exception.Message)"
+    }
+
     Write-Host "Completed $($item.id)"
+}
+
+function Finalize-CompletedState {
+    $state = Read-AutoRunState
+    if ($null -eq $state) {
+        Write-Host "AIOS auto-run state: IDLE"
+        return
+    }
+
+    $taskId = Get-AutoRunStateTaskId $state
+    if (Test-AutoRunStateIsTerminal $state) {
+        if ($state.phase -eq "COMPLETED") {
+            Write-Host "AIOS auto-run state already completed for $taskId."
+            return
+        }
+        throw "AUTO_RUN_STATE_ALREADY_TERMINAL: $($state.phase)"
+    }
+
+    Assert-AutoRunStateHasNoUnfinishedSensitiveEvents $state
+    $entry = Get-QueueEntryById $taskId
+    if ($null -eq $entry) {
+        throw "AUTO_RUN_QUEUE_NOT_FOUND_FOR_STATE: $taskId"
+    }
+    if ($entry.Item.status -ne "completed") {
+        throw "AUTO_RUN_QUEUE_NOT_COMPLETED_FOR_STATE: $taskId [$($entry.Item.status)]"
+    }
+    $completedAt = Get-SafePropertyValue $entry.Item "completedAt"
+    if ([string]::IsNullOrWhiteSpace($completedAt)) {
+        throw "AUTO_RUN_QUEUE_COMPLETION_METADATA_MISSING: $taskId"
+    }
+
+    Complete-AutoRunState $state $taskId "TASK_COMPLETED" | Out-Null
+    Write-Host "Finalized completed auto-run state for $taskId."
 }
 
 function Skip-Current {
@@ -815,6 +992,7 @@ switch ($Command) {
     "auto-status"      { Invoke-AutoStatus }
     "auto-resume"      { Resume-AutoRun }
     "auto-stop"        { Stop-AutoRun }
+    "finalize-completed-state" { Finalize-CompletedState }
     default {
         Write-Host "AIOS v10.0.2 commands:"
         Write-Host "  doctor"
@@ -829,5 +1007,6 @@ switch ($Command) {
         Write-Host "  auto-status"
         Write-Host "  auto-resume"
         Write-Host "  auto-stop"
+        Write-Host "  finalize-completed-state"
     }
 }
