@@ -70,6 +70,13 @@ function Test-StatusLineCompleted([string]$Line) {
     return $Line -match "(?i)(^|[^A-Z])(DONE|COMPLETED|CLOSED|SKIPPED)([^A-Z]|$)"
 }
 
+function Test-StatusLineUnavailable([string]$Line) {
+    if ($Line -match "(?i)\[-\]") {
+        return $true
+    }
+    return $Line -match "(?i)(blocked|dependency[_ -]?blocked)"
+}
+
 function Get-StatusSearchRanges([string[]]$Lines) {
     $workOrderHeading = -join ([char[]]@(0x5DE5,0x4F5C,0x9806,0x5E8F))
     $explicitOrderHeading = -join ([char[]]@(0x660E,0x78BA,0x6392,0x5E8F,0x6E05,0x55AE))
@@ -117,6 +124,9 @@ function Get-NextStatusItem {
             if (Test-StatusLineCompleted $line) {
                 continue
             }
+            if (Test-StatusLineUnavailable $line) {
+                continue
+            }
             return [pscustomobject]@{
                 Id = $idMatch.Groups[1].Value.ToUpperInvariant()
                 LineNumber = $i + 1
@@ -134,6 +144,71 @@ function Write-NewFile([string]$Path, [string]$Content) {
     }
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
     [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
+}
+
+function New-QueueArtifactPlan($SelectedTask) {
+    $id = $SelectedTask.Id
+    $bugRoot = Ensure-AIOSDirectory "docs\bugs"
+    $acceptanceRoot = Ensure-AIOSDirectory "docs\acceptance"
+    $queueRoot = Ensure-AIOSDirectory ".aios\queue"
+    $inboxRoot = Ensure-AIOSDirectory ".aios\inbox"
+
+    return [ordered]@{
+        Id = $id
+        BugPath = Join-Path $bugRoot "$id.md"
+        AcceptancePath = Join-Path $acceptanceRoot "$id.md"
+        QueuePath = Join-Path $queueRoot "$id.json"
+        InboxPath = Join-Path $inboxRoot "$id-PROMPT.md"
+    }
+}
+
+function Assert-NewQueueArtifactTargets($Plan) {
+    foreach ($path in @($Plan.BugPath, $Plan.AcceptancePath, $Plan.QueuePath, $Plan.InboxPath)) {
+        if (Test-Path -LiteralPath $path) {
+            throw "Refusing to overwrite existing file: $path"
+        }
+    }
+}
+
+function Write-QueueArtifactsSafely($Plan, [string]$BugContent, [string]$AcceptanceContent, [string]$InboxContent, $QueueItem) {
+    Assert-NewQueueArtifactTargets $Plan
+
+    $json = $QueueItem | ConvertTo-Json -Depth 8
+    $artifacts = @(
+        [pscustomobject]@{ Path = $Plan.BugPath; Content = $BugContent },
+        [pscustomobject]@{ Path = $Plan.AcceptancePath; Content = $AcceptanceContent },
+        [pscustomobject]@{ Path = $Plan.InboxPath; Content = $InboxContent },
+        [pscustomobject]@{ Path = $Plan.QueuePath; Content = ($json + [Environment]::NewLine) }
+    )
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("aios-artifacts-" + [guid]::NewGuid().ToString("N"))
+    $createdTargets = @()
+
+    try {
+        New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
+        for ($i = 0; $i -lt $artifacts.Count; $i++) {
+            if ($env:AIOS_TEST_FAIL_AFTER_ARTIFACT_COUNT -and $i -ge [int]$env:AIOS_TEST_FAIL_AFTER_ARTIFACT_COUNT) {
+                throw "AIOS_TEST_SIMULATED_ARTIFACT_FAILURE"
+            }
+            $tempPath = Join-Path $tempRoot "$i.tmp"
+            [System.IO.File]::WriteAllText($tempPath, $artifacts[$i].Content, $utf8NoBom)
+            Move-Item -LiteralPath $tempPath -Destination $artifacts[$i].Path -ErrorAction Stop
+            $createdTargets += $artifacts[$i].Path
+        }
+    }
+    catch {
+        foreach ($path in $createdTargets) {
+            if (Test-Path -LiteralPath $path) {
+                Remove-Item -LiteralPath $path -Force
+            }
+        }
+        throw
+    }
+    finally {
+        if (Test-Path -LiteralPath $tempRoot) {
+            Remove-Item -LiteralPath $tempRoot -Recurse -Force
+        }
+    }
 }
 
 function Save-QueueItem([string]$Path, $Item) {
@@ -591,30 +666,22 @@ function Invoke-Doctor {
 
 function Invoke-EnqueueNext {
     Assert-NoCurrentQueueItem
-    $next = Get-NextStatusItem
-    if ($null -eq $next) {
+    $selectedTask = Get-NextStatusItem
+    if ($null -eq $selectedTask) {
         Write-Host "NO_ELIGIBLE_STATUS_ITEM"
         return
     }
 
-    $id = $next.Id
-    $bugRoot = Ensure-AIOSDirectory "docs\bugs"
-    $acceptanceRoot = Ensure-AIOSDirectory "docs\acceptance"
-    $queueRoot = Ensure-AIOSDirectory ".aios\queue"
-    $inboxRoot = Ensure-AIOSDirectory ".aios\inbox"
-
-    $bugPath = Join-Path $bugRoot "$id.md"
-    $acceptancePath = Join-Path $acceptanceRoot "$id.md"
-    $queuePath = Join-Path $queueRoot "$id.json"
-    $inboxPath = Join-Path $inboxRoot "$id-PROMPT.md"
+    $id = $selectedTask.Id
+    $artifactPlan = New-QueueArtifactPlan $selectedTask
+    Assert-NewQueueArtifactTargets $artifactPlan
 
     $createdAt = (Get-Date).ToString("o")
-    if (-not (Test-Path -LiteralPath $bugPath)) {
-        $bugContent = @"
+    $bugContent = @"
 # $id
 
-Source: STATUS.md line $($next.LineNumber)
-Status item: $($next.Text)
+Source: STATUS.md line $($selectedTask.LineNumber)
+Status item: $($selectedTask.Text)
 Created: $createdAt
 
 ## Bug
@@ -628,11 +695,8 @@ Implement the queued STATUS.md item without changing unrelated project behavior.
 - Follow the PLAN -> APPROVED -> IMPLEMENT -> VALIDATE -> PULL_REQUEST -> HUMAN_MERGE workflow.
 - Do not edit protected files without explicit approval.
 "@
-        Write-NewFile $bugPath $bugContent
-    }
 
-    if (-not (Test-Path -LiteralPath $acceptancePath)) {
-        $acceptanceContent = @"
+    $acceptanceContent = @"
 # Acceptance: $id
 
 The queued item is accepted when:
@@ -642,15 +706,13 @@ The queued item is accepted when:
 - The working tree contains only intentional changes.
 - A pull request is opened and not merged automatically.
 "@
-        Write-NewFile $acceptancePath $acceptanceContent
-    }
 
     $inboxContent = @"
 # AIOS Inbox Prompt: $id
 
-Queued from STATUS.md line $($next.LineNumber):
+Queued from STATUS.md line $($selectedTask.LineNumber):
 
-> $($next.Text)
+> $($selectedTask.Text)
 
 Read before implementation:
 
@@ -671,8 +733,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-v10.ps1 current
         createdAt = $createdAt
         source = [ordered]@{
             file = "STATUS.md"
-            line = $next.LineNumber
-            text = $next.Text
+            line = $selectedTask.LineNumber
+            text = $selectedTask.Text
         }
         files = [ordered]@{
             bug = "docs/bugs/$id.md"
@@ -682,14 +744,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\aios-v10.ps1 current
         }
     }
 
-    Write-NewFile $inboxPath $inboxContent
-    Save-QueueItem $queuePath $queueItem
+    Write-QueueArtifactsSafely $artifactPlan $bugContent $acceptanceContent $inboxContent $queueItem
 
     Write-Host "Queued $id"
-    Write-Host "Bug: $bugPath"
-    Write-Host "Acceptance: $acceptancePath"
-    Write-Host "Queue: $queuePath"
-    Write-Host "Inbox: $inboxPath"
+    Write-Host "Bug: $($artifactPlan.BugPath)"
+    Write-Host "Acceptance: $($artifactPlan.AcceptancePath)"
+    Write-Host "Queue: $($artifactPlan.QueuePath)"
+    Write-Host "Inbox: $($artifactPlan.InboxPath)"
 }
 
 function Invoke-QueueStatus {
