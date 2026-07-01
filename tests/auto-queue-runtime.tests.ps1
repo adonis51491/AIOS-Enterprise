@@ -30,12 +30,36 @@ $ZhStory = -join ([char[]]@(0x6545,0x4E8B))
 $ZhTask = -join ([char[]]@(0x4E2D,0x6587,0x4EFB,0x52D9))
 $ZhNoId = -join ([char[]]@(0x6C92,0x6709,0x6B63,0x5F0F,0x0049,0x0044))
 $ZhDuplicateAppointment = -join ([char[]]@(0x9632,0x6B62,0x540C,0x6642,0x6BB5,0x91CD,0x8907,0x9810,0x7D04))
+$CreatedProjects = New-Object System.Collections.Generic.List[string]
 
 function New-TestProject([string]$Name, [string[]]$StatusLines) {
     $path = Join-Path $env:TEMP ("aios-auto-queue-$Name-" + [guid]::NewGuid().ToString("N"))
     New-Item -ItemType Directory -Path $path -Force | Out-Null
+    $CreatedProjects.Add($path) | Out-Null
     [System.IO.File]::WriteAllLines((Join-Path $path "STATUS.md"), $StatusLines, $Utf8NoBom)
     return $path
+}
+
+function Remove-TestProject([string]$ProjectRoot) {
+    if ([string]::IsNullOrWhiteSpace($ProjectRoot)) { return }
+    $tempRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
+    $fullPath = [System.IO.Path]::GetFullPath($ProjectRoot)
+    $leaf = Split-Path -Leaf $fullPath
+    if (-not $fullPath.StartsWith($tempRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to clean fixture outside temp: $fullPath"
+    }
+    if ($fullPath.TrimEnd('\') -eq $tempRoot.TrimEnd('\')) {
+        throw "Refusing to clean temp root: $fullPath"
+    }
+    if ($fullPath.TrimEnd('\') -eq ([System.IO.Path]::GetFullPath($AIOSRoot)).TrimEnd('\')) {
+        throw "Refusing to clean repository root: $fullPath"
+    }
+    if ($leaf -notmatch '^aios-auto-queue-[A-Za-z0-9_-]+-[0-9a-f]{32}$') {
+        throw "Refusing to clean unexpected fixture name: $leaf"
+    }
+    if (Test-Path -LiteralPath $fullPath) {
+        Remove-Item -LiteralPath $fullPath -Recurse -Force
+    }
 }
 
 function Invoke-AIOS([string]$ProjectRoot, [string]$Command) {
@@ -400,10 +424,69 @@ $tests += [pscustomobject]@{
     }
 }
 
-foreach ($test in $tests) {
-    Write-Host "[TEST] $($test.Name)"
-    & $test.Run
-    Write-Host "[PASS] $($test.Name)"
+
+$tests += [pscustomobject]@{
+    Name = "Auto queue fixture cleanup removes owned temp project"
+    Run = {
+        $project = New-TestProject "cleanup-owned" @("# STATUS", "", "1. BUG-001$ZhColon cleanup")
+        Assert-True (Test-Path -LiteralPath $project) "Fixture was not created"
+        Remove-TestProject $project
+        Assert-True (-not (Test-Path -LiteralPath $project)) "Owned fixture was not cleaned"
+    }
+}
+
+$tests += [pscustomobject]@{
+    Name = "Auto queue fixture cleanup preserves unrelated same-prefix fixture"
+    Run = {
+        $unrelated = Join-Path $env:TEMP ("aios-auto-queue-unrelated-" + [guid]::NewGuid().ToString("N"))
+        New-Item -ItemType Directory -Path $unrelated -Force | Out-Null
+        try {
+            [System.IO.File]::WriteAllText((Join-Path $unrelated "sentinel.txt"), "keep", $Utf8NoBom)
+            $project = New-TestProject "cleanup-preserve" @("# STATUS", "", "1. BUG-001$ZhColon cleanup")
+            Remove-TestProject $project
+            Assert-True (Test-Path -LiteralPath $unrelated) "Unrelated same-prefix fixture was deleted"
+            Assert-True ((Get-Content -LiteralPath (Join-Path $unrelated "sentinel.txt") -Raw) -eq "keep") "Unrelated sentinel changed"
+        }
+        finally {
+            if (Test-Path -LiteralPath $unrelated) {
+                Remove-Item -LiteralPath $unrelated -Recurse -Force
+            }
+        }
+    }
+}
+
+$tests += [pscustomobject]@{
+    Name = "Auto queue fixture cleanup helper runs after assertion failure simulation"
+    Run = {
+        $project = New-TestProject "cleanup-failure" @("# STATUS", "", "1. BUG-001$ZhColon cleanup")
+        try {
+            throw "SIMULATED_ASSERTION_FAILURE"
+        }
+        catch {
+            Assert-True ($_.Exception.Message -eq "SIMULATED_ASSERTION_FAILURE") "Unexpected simulated error"
+        }
+        finally {
+            Remove-TestProject $project
+        }
+        Assert-True (-not (Test-Path -LiteralPath $project)) "Fixture survived simulated assertion failure"
+    }
+}
+
+try {
+    foreach ($test in $tests) {
+        Write-Host "[TEST] $($test.Name)"
+        & $test.Run
+        Write-Host "[PASS] $($test.Name)"
+    }
+}
+finally {
+    foreach ($project in @($CreatedProjects)) {
+        Remove-TestProject $project
+    }
+}
+
+foreach ($project in @($CreatedProjects)) {
+    Assert-True (-not (Test-Path -LiteralPath $project)) "Fixture was not cleaned: $project"
 }
 
 Write-Host "All auto queue runtime tests passed."
