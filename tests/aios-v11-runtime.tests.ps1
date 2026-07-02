@@ -34,7 +34,7 @@ function Remove-TestProject([string]$Path) {
 }
 
 function Invoke-Runtime([string]$Project, [string[]]$Arguments, [bool]$ExpectFailure = $false) {
-    $output = & powershell -NoProfile -ExecutionPolicy Bypass -File $Runtime @Arguments -Root $Project 2>&1 | Out-String
+    $output = & pwsh -NoProfile -File $Runtime @Arguments -Root $Project 2>&1 | Out-String
     $code = $LASTEXITCODE
     if ($ExpectFailure) {
         Assert-True ($code -ne 0) "Expected command failure but exit code was zero. Output: $output"
