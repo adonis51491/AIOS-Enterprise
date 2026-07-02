@@ -1,6 +1,10 @@
 {
   "name": "AIOS Enterprise",
-  "version": "10.0.2",
-  "codename": "Clean Installer Patch",
-  "channel": "stable"
+  "version": "11.0.0-preview.1",
+  "codename": "Governed Engineering Orchestrator",
+  "channel": "preview",
+  "compatibility": {
+    "v10Runtime": "retained",
+    "v11TaskStore": ".aios-data/tasks"
+  }
 }
